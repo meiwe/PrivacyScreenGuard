@@ -5,7 +5,8 @@
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
         Width="860" Height="672"
-        ResizeMode="CanMinimize"
+        MinWidth="760" MinHeight="600"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
@@ -20,8 +21,8 @@
                 <Image Source="pack://application:,,,/Assets/icon_32.png" Width="26" Height="26"
                        VerticalAlignment="Center"/>
                 <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="摄像头隐私屏" FontSize="19" FontWeight="SemiBold"/>
-                    <TextBlock Text="摄像头守护 · 本地识别 · 自动遮罩" FontSize="12"
+                    <TextBlock Text="摄像头隐私屏" FontSize="{StaticResource FontSize.Title}" FontWeight="SemiBold"/>
+                    <TextBlock Text="摄像头守护 · 本地识别 · 自动遮罩" FontSize="{StaticResource FontSize.Caption}"
                                Foreground="{DynamicResource Fg.Secondary}" Margin="0,2,0,0"/>
                 </StackPanel>
             </StackPanel>
@@ -36,7 +37,7 @@
             <StackPanel Margin="0,0,0,12">
 
                 <!-- 1. 守护状态 -->
-                <GroupBox Header="守护状态" Padding="12" Margin="0,0,0,12">
+                <GroupBox Header="守护状态" Style="{StaticResource Card}">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="{DynamicResource StatusOK}"
                                  VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -50,20 +51,20 @@
                 </GroupBox>
 
                 <!-- 2. 检测参数 -->
-                <GroupBox Header="检测参数" Padding="12" Margin="0,0,0,12">
+                <GroupBox Header="检测参数" Style="{StaticResource Card}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="110"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="56"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="32"/>
-                            <RowDefinition Height="32"/>
-                            <RowDefinition Height="32"/>
-                            <RowDefinition Height="36"/>
-                            <RowDefinition Height="32"/>
-                            <RowDefinition Height="32"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="识别阈值" VerticalAlignment="Center"/>
@@ -116,7 +117,7 @@
                 </GroupBox>
 
                 <!-- 3. 设备选择 -->
-                <GroupBox Header="设备选择" Padding="12" Margin="0,0,0,12">
+                <GroupBox Header="设备选择" Style="{StaticResource Card}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="摄像头" Width="110" VerticalAlignment="Center"/>
@@ -140,7 +141,7 @@
                 </GroupBox>
 
                 <!-- 4. 快捷与启动 -->
-                <GroupBox Header="快捷与启动" Padding="12" Margin="0,0,0,12">
+                <GroupBox Header="快捷与启动" Style="{StaticResource Card}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="暂停/恢复热键" Width="110" VerticalAlignment="Center"/>
@@ -165,7 +166,7 @@
                 </GroupBox>
 
                 <!-- 5. 遮罩外观 -->
-                <GroupBox Header="遮罩外观" Padding="12" Margin="0,0,0,12">
+                <GroupBox Header="遮罩外观" Style="{StaticResource Card}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
@@ -185,8 +186,8 @@
                     </StackPanel>
                 </GroupBox>
 
-                <!-- 6. 隐私与数据 -->
-                <GroupBox Header="隐私与数据" Padding="12" Margin="0,0,0,8">
+                <!-- 6. 隐私与数据（危险区：与配置区额外拉开 24 间隔） -->
+                <GroupBox Header="隐私与数据" Style="{StaticResource Card}" Margin="0,12,0,8">
                     <StackPanel>
                         <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储。"
                                    Foreground="{DynamicResource Fg.Secondary}" TextWrapping="Wrap" Margin="0,0,0,10"/>

@@ -8,6 +8,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <!-- 自定义画刷字典（索引 0，ThemeManager 运行时在此位置替换 Light/Dark） -->
                 <ResourceDictionary Source="pack://application:,,,/Themes/Light.xaml"/>
+                <!-- 排版 token 与卡片样式（与主题无关，常驻） -->
+                <ResourceDictionary Source="pack://application:,,,/Themes/Typography.xaml"/>
                 <!-- WPF-UI：Fluent 控件样式 + 官方明暗主题（ApplicationThemeManager 切换） -->
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />

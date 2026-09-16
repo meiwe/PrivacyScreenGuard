@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!--
+        排版 token：8pt 网格间距 + Fluent 类型标尺字号 + 卡片样式。
+        画刷 token 在 Light/Dark.xaml；本字典与主题无关，启动后常驻。
+    -->
+
+    <!-- 间距 token（8pt 网格：4 / 8 / 12 / 16 / 24） -->
+    <Thickness x:Key="Space.XS">4</Thickness>
+    <Thickness x:Key="Space.S">8</Thickness>
+    <Thickness x:Key="Space.M">12</Thickness>
+    <Thickness x:Key="Space.L">16</Thickness>
+    <Thickness x:Key="Space.XL">24</Thickness>
+
+    <!-- 字号 token（Fluent 类型标尺：Caption 12 / Body 14 / Title 20） -->
+    <sys:Double x:Key="FontSize.Caption">12</sys:Double>
+    <sys:Double x:Key="FontSize.Body">14</sys:Double>
+    <sys:Double x:Key="FontSize.Title">20</sys:Double>
+
+    <!-- 卡片容器：替代裸 GroupBox，圆角 8 + 卡片底色 + 统一间距 -->
+    <Style x:Key="Card" TargetType="GroupBox">
+        <Setter Property="Background" Value="{DynamicResource Bg.Card}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Bg.Border}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <StackPanel>
+                            <!-- 分区标题：Body 14 SemiBold，与内容间距 8 -->
+                            <TextBlock Text="{TemplateBinding Header}"
+                                       FontSize="{StaticResource FontSize.Body}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8"/>
+                            <ContentPresenter/>
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
