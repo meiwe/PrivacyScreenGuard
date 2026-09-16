@@ -151,6 +151,26 @@ public sealed class GuardEngine : IDisposable
     }
 
     /// <summary>
+    /// 重新同步遮罩动作：按状态机当前激活态补发一次 Show/Hide（订阅方应幂等处理）。
+    /// 供 UI 侧变更遮罩配置（如守护显示器范围）后调用——配置变更会重建遮罩窗口，
+    /// 使窗口的显示状态与状态机脱节（该 Hide 的不 Hide / 该 Show 的不 Show），
+    /// 本方法按状态机的真实状态恢复一致性；此后遮罩仍完全由状态机驱动。
+    /// </summary>
+    public void ResyncMaskAction()
+    {
+        bool maskActive;
+        lock (_sync)
+        {
+            if (_disposedFlag == 1)
+            {
+                return;
+            }
+            maskActive = _stateMachine.MaskActive;
+        }
+        MaskActionRequested?.Invoke(maskActive ? MaskAction.Show : MaskAction.Hide);
+    }
+
+    /// <summary>
     /// 设置/更新主人特征模板（支持多姿态：正脸 + 左右侧脸，内部保存副本）。
     /// 比对时取与全部模板的最大相似度——任一姿态匹配即认定主人。
     /// 有模板后才能调用 <see cref="Start"/>。

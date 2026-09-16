@@ -539,8 +539,9 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 应用显示器守护配置：写回设置 → 保存 → Configure → 遮罩管理器按新范围重建并显示
-    /// （UpdateConfig 后需自行调用 ShowAll；此后遮罩的显示/隐藏仍由引擎状态机控制）。
+    /// 应用显示器守护配置：写回设置 → 保存 → Configure → 遮罩管理器按新范围重建。
+    /// UpdateConfig 内部会隐藏并清空全部遮罩窗口；随后按引擎状态机的真实状态补发
+    /// Show/Hide 恢复一致（此前无条件 ShowAll 会让遮罩强制弹出且永不消失）。
     /// </summary>
     private void ApplyMonitorSettings()
     {
@@ -555,7 +556,12 @@ public partial class MainWindow : Window
         if (_masks is not null)
         {
             _masks.UpdateConfig(mode, _settings.SelectedMonitors);
-            _masks.ShowAll(_settings.BlurStrength);
+        }
+        if (_engine is { IsRunning: true })
+        {
+            // 仅当陌生人正触发（状态机 MaskActive）时才重新 Show，否则保持隐藏；
+            // 此后遮罩的显示/隐藏完全由引擎状态机控制
+            _engine.ResyncMaskAction();
         }
         ShowMessage($"守护显示器：{DescribeMonitorMode(mode)}");
     }
