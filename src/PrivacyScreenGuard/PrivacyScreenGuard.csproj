@@ -27,6 +27,8 @@
     <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.13.0.20260627" />
+    <!-- Fluent 控件样式与明暗主题服务（Windows 11 观感） -->
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
     <PackageReference Include="System.Management" Version="10.0.12" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
     <PackageReference Include="System.Text.Json" Version="10.0.12" />

@@ -4,41 +4,53 @@
         Title="摄像头隐私屏"
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
-        Width="860" Height="640"
+        Width="860" Height="672"
         ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/> <!-- 标题区 -->
+            <RowDefinition Height="*"/>    <!-- 主体内容 -->
+            <RowDefinition Height="Auto"/> <!-- 底部状态栏 -->
         </Grid.RowDefinitions>
 
+        <!-- 标题区：应用图标 + 名称 + 副标题；右侧为主题切换 -->
+        <Grid Grid.Row="0" Margin="16,12,16,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/Assets/icon_32.png" Width="26" Height="26"
+                       VerticalAlignment="Center"/>
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="摄像头隐私屏" FontSize="19" FontWeight="SemiBold"/>
+                    <TextBlock Text="摄像头守护 · 本地识别 · 自动遮罩" FontSize="12"
+                               Foreground="{DynamicResource Fg.Secondary}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            <!-- 明暗主题切换（全局控件，固定在标题区右上） -->
+            <Button x:Name="BtnTheme" Width="40" Height="32" HorizontalAlignment="Right"
+                    VerticalAlignment="Center" Padding="0" FontSize="15"
+                    ToolTip="切换明亮 / 深色主题"/>
+        </Grid>
+
         <!-- 主体：各分区（内容超高时可滚动） -->
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="12,12,12,6">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="16,0,16,0">
+            <StackPanel Margin="0,0,0,12">
 
                 <!-- 1. 守护状态 -->
-                <GroupBox Header="守护状态" Padding="10" Margin="0,0,0,10">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="{DynamicResource StatusOK}"
-                                     VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="Bold"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="{DynamicResource StatusOK}"
-                                       Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
-                            <Button x:Name="BtnPauseResume" Content="暂停守护" Width="100" Margin="24,0,0,0"
-                                    Padding="6,3"/>
-                        </StackPanel>
-                        <!-- 明暗主题切换（靠右） -->
-                        <Button x:Name="BtnTheme" Width="40" Height="28" HorizontalAlignment="Right"
-                                Padding="0" FontSize="15"
-                                ToolTip="切换明亮 / 深色主题"/>
-                    </Grid>
+                <GroupBox Header="守护状态" Padding="12" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="{DynamicResource StatusOK}"
+                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="{DynamicResource StatusOK}"
+                                   Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <Button x:Name="BtnPauseResume" Content="暂停守护" Width="100" Margin="24,0,0,0"
+                                Padding="6,3"/>
+                    </StackPanel>
                 </GroupBox>
 
                 <!-- 2. 检测参数 -->
-                <GroupBox Header="检测参数" Padding="10" Margin="0,0,0,10">
+                <GroupBox Header="检测参数" Padding="12" Margin="0,0,0,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="110"/>
@@ -104,7 +116,7 @@
                 </GroupBox>
 
                 <!-- 3. 设备选择 -->
-                <GroupBox Header="设备选择" Padding="10" Margin="0,0,0,10">
+                <GroupBox Header="设备选择" Padding="12" Margin="0,0,0,12">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="摄像头" Width="110" VerticalAlignment="Center"/>
@@ -128,7 +140,7 @@
                 </GroupBox>
 
                 <!-- 4. 快捷与启动 -->
-                <GroupBox Header="快捷与启动" Padding="10" Margin="0,0,0,10">
+                <GroupBox Header="快捷与启动" Padding="12" Margin="0,0,0,12">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="暂停/恢复热键" Width="110" VerticalAlignment="Center"/>
@@ -153,7 +165,7 @@
                 </GroupBox>
 
                 <!-- 5. 遮罩外观 -->
-                <GroupBox Header="遮罩外观" Padding="10" Margin="0,0,0,10">
+                <GroupBox Header="遮罩外观" Padding="12" Margin="0,0,0,12">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
@@ -174,7 +186,7 @@
                 </GroupBox>
 
                 <!-- 6. 隐私与数据 -->
-                <GroupBox Header="隐私与数据" Padding="10" Margin="0,0,0,4">
+                <GroupBox Header="隐私与数据" Padding="12" Margin="0,0,0,8">
                     <StackPanel>
                         <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储。"
                                    Foreground="{DynamicResource Fg.Secondary}" TextWrapping="Wrap" Margin="0,0,0,10"/>
@@ -187,7 +199,7 @@
         </ScrollViewer>
 
         <!-- 底部状态栏：版本 + 最新提示消息 -->
-        <Border Grid.Row="1" Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0,1,0,0"
+        <Border Grid.Row="2" Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0,1,0,0"
                 Padding="12,6">
             <Grid>
                 <Grid.ColumnDefinitions>

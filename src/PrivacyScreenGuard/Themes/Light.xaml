@@ -1,23 +1,17 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--
-        明亮主题画刷（Windows 11 Fluent 浅色风格）。
-        仅定义颜色资源；控件样式在 Controls.xaml 中通过 DynamicResource 引用，
-        运行时替换本字典即可全局切换主题。
+        明亮主题自定义画刷（背景/卡片/强调色/状态色）。
+        控件样式由 WPF-UI 的 Fluent ControlsDictionary 提供；
+        运行时 ThemeManager 替换本字典 + 调用 ApplicationThemeManager 完成整体切换。
     -->
     <SolidColorBrush x:Key="Bg.Window" Color="#F3F4F6"/>
     <SolidColorBrush x:Key="Bg.Card" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Bg.Hover" Color="#E8EBEF"/>
-    <SolidColorBrush x:Key="Bg.Pressed" Color="#DDE2E8"/>
     <SolidColorBrush x:Key="Bg.Border" Color="#D5DBE1"/>
-    <SolidColorBrush x:Key="Bg.Input" Color="#FFFFFF"/>
 
-    <SolidColorBrush x:Key="Fg.Primary" Color="#1B1F24"/>
     <SolidColorBrush x:Key="Fg.Secondary" Color="#5C6771"/>
-    <SolidColorBrush x:Key="Fg.OnAccent" Color="#FFFFFF"/>
 
     <SolidColorBrush x:Key="Accent" Color="#0A6CDA"/>
-    <SolidColorBrush x:Key="Accent.Hover" Color="#0857B3"/>
     <SolidColorBrush x:Key="Danger" Color="#C43127"/>
     <SolidColorBrush x:Key="StatusOK" Color="#107C10"/>
     <SolidColorBrush x:Key="StatusWarn" Color="#B7791F"/>

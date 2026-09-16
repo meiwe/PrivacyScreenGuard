@@ -3,16 +3,18 @@ using System.Windows;
 
 // WinForms 隐式全局 using 会引入 System.Windows.Forms.Application，这里显式消歧
 using Application = System.Windows.Application;
+using Wpf.Ui.Appearance;
 
 namespace PrivacyScreenGuard.Services;
 
 /// <summary>
-/// 主题管理器：在明亮/深色两套画刷字典之间整体切换（Controls.xaml 控件样式常驻，
-/// 其中的 DynamicResource 引用会自动跟随画刷变化，无需重建任何窗口）。
+/// 主题管理器：明暗两套主题整体切换。
+/// Fluent 控件配色交给 WPF-UI 官方 ApplicationThemeManager；
+/// 自定义画刷（背景/强调色/状态色）通过替换 App.Resources.MergedDictionaries[0] 实现。
 /// </summary>
 public static class ThemeManager
 {
-    /// <summary>画刷字典在 App.Resources.MergedDictionaries 中的索引（Controls.xaml 之前）。</summary>
+    /// <summary>自定义画刷字典在 App.Resources.MergedDictionaries 中的索引（Light.xaml）。</summary>
     private const int PaletteIndex = 0;
 
     /// <summary>主题标识。</summary>
@@ -31,6 +33,11 @@ public static class ThemeManager
         bool dark = string.Equals(theme, Dark, StringComparison.OrdinalIgnoreCase);
         Current = dark ? Dark : Light;
 
+        // 1. WPF-UI 官方主题：Fluent 控件配色、窗口标题栏等整体切换
+        ApplicationThemeManager.Apply(dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
+
+        // 2. 自定义画刷（背景/卡片/强调色/状态色）：整体替换调色板字典，
+        //    所有 DynamicResource 引用自动刷新，无需重建任何窗口
         var dicts = Application.Current.Resources.MergedDictionaries;
         var source = new Uri(dark
             ? "pack://application:,,,/Themes/Dark.xaml"

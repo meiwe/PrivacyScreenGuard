@@ -12,7 +12,7 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 - **全局热键**：默认 `Ctrl+Alt+P` 一键暂停/恢复守护（可在设置中更换，被占用时提示）。
 - **系统托盘**：常驻托盘图标（绿=守护中 / 黄=已暂停 / 红=摄像头异常），右键菜单 + 关键事件气泡提醒。
 - **加密存储**：主人特征模板使用 DPAPI（当前 Windows 用户）加密落盘，换用户/换机器均无法解密；提供一键清除生物特征。
-- **明亮 / 深色主题**：主窗口右上角一键切换明亮与深色主题，选择随设置持久保存，重启后保持。
+- **明亮 / 深色主题**：基于 [WPF-UI](https://wpfui.lepo.co/)（Fluent Design）实现 Windows 11 观感，主窗口右上角一键切换明亮与深色主题，选择随设置持久保存，重启后保持。
 - **单实例运行**：重复启动会提示"已在运行"并退出。
 - **开机自启**：可选，注册表方式，设置文件为准双向同步。
 
@@ -41,6 +41,7 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 | OpenCvSharp4 | 4.13.0.20260627 | OpenCV 的 .NET 封装：摄像头采集（VideoCapture）、DNN 推理（CvDnn）、图像处理（对齐变换等） |
 | OpenCvSharp4.runtime.win | 4.13.0.20260627 | OpenCV 在 Windows 上的原生动态库（随单文件发布一并打包） |
 | OpenCvSharp4.WpfExtensions | 4.13.0.20260627 | Mat 与 WPF BitmapSource 互转（首次注册向导的摄像头预览） |
+| WPF-UI | 4.3.0 | Fluent Design 控件样式与明暗主题服务（Windows 11 观感） |
 | System.Management | 10.0.12 | 通过 WMI 查询摄像头设备名称 |
 | System.Security.Cryptography.ProtectedData | 10.0.12 | DPAPI 加密主人特征模板 |
 | System.Text.Json | 10.0.12 | 读写设置文件 settings.json |

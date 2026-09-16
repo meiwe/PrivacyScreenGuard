@@ -1,22 +1,16 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--
-        深色主题画刷（VS Code / Fluent Dark 风格）。
+        深色主题自定义画刷（背景/卡片/强调色/状态色）。
         资源键与 Light.xaml 完全一致，运行时整体替换即可全局切换主题。
     -->
     <SolidColorBrush x:Key="Bg.Window" Color="#1E1E22"/>
     <SolidColorBrush x:Key="Bg.Card" Color="#2A2A31"/>
-    <SolidColorBrush x:Key="Bg.Hover" Color="#3A3A43"/>
-    <SolidColorBrush x:Key="Bg.Pressed" Color="#45454F"/>
     <SolidColorBrush x:Key="Bg.Border" Color="#43434B"/>
-    <SolidColorBrush x:Key="Bg.Input" Color="#323239"/>
 
-    <SolidColorBrush x:Key="Fg.Primary" Color="#F2F2F5"/>
     <SolidColorBrush x:Key="Fg.Secondary" Color="#9DA3AD"/>
-    <SolidColorBrush x:Key="Fg.OnAccent" Color="#0B0B0E"/>
 
     <SolidColorBrush x:Key="Accent" Color="#4CC2FF"/>
-    <SolidColorBrush x:Key="Accent.Hover" Color="#7AD2FF"/>
     <SolidColorBrush x:Key="Danger" Color="#FF6B5E"/>
     <SolidColorBrush x:Key="StatusOK" Color="#5BD75B"/>
     <SolidColorBrush x:Key="StatusWarn" Color="#FFD75E"/>
