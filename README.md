@@ -17,8 +17,9 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 
 ## 2. 隐私承诺
 
-- **全本地处理**：人脸检测、特征提取、比对全部在本机 CPU 完成，应用运行期间不发起任何网络请求（模型下载脚本除外，且仅在手动执行时联网）。
-- **不上传**：不向任何服务器发送数据，可用防火墙/netstat 自行验证。
+- **全本地处理**：人脸检测、特征提取、比对全部在本机 CPU 完成。
+- **唯一的联网行为**：仅在首次运行、模型文件缺失且用户点击确认后下载模型（约 37 MB，来自 OpenCV Zoo 官方仓库）。模型就绪后，正常运行期间不发起任何网络请求；可在设置完成后用防火墙/netstat 自行验证。
+- **不上传**：不向任何服务器发送数据（包括人脸特征、画面、使用统计）。
 - **不录制、不保存原始画面**：摄像头帧仅在内存中处理，处理完立即释放，绝不写盘、不缓存超过一帧、无临时文件。
 - **仅保存加密特征**：落盘的只有 DPAPI 加密后的 128 维特征向量（`%LOCALAPPDATA%\PrivacyScreenGuard\owner.bin`），不含任何图像。
 - **一键清除**：主窗口提供"清除主人人脸数据"，删除加密模板后需重新注册才能继续守护。
@@ -61,16 +62,12 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 
 **放置路径**：
 
-- 开发期：仓库根 `models/` 目录（即 `d:\PrivacyScreenGuard\models\`）
-- 发布后：exe 同目录的 `models/` 文件夹
+- 程序内自动下载（推荐）：首次启动时若模型缺失，程序会询问并自动下载到 exe 同目录的 `models/`；该位置不可写时（如安装在 `Program Files`）自动改用 `%LOCALAPPDATA%\PrivacyScreenGuard\models\`
+- 手动放置：开发期放仓库根 `models/`；发布后放 exe 同目录的 `models/` 文件夹
 
-程序按以下顺序查找模型目录（见 `ModelLocator`）：① exe 同目录 `models` → ② 当前工作目录 `models` → ③ exe 目录上溯三级的 `models`（兼容开发期 `bin/Debug` 结构）。
+程序按以下顺序查找模型目录（见 `ModelLocator`）：① exe 同目录 `models` → ② 当前工作目录 `models` → ③ exe 目录上溯三级的 `models`（兼容开发期 `bin/Debug` 结构）→ ④ `%LOCALAPPDATA%\PrivacyScreenGuard\models`。
 
-**脚本用法**（推荐，自动多源重试：GitHub 官方 + 国内镜像；已存在的文件自动跳过）：
-
-```powershell
-python tools/download_models.py
-```
+> 下载源按顺序尝试：GitHub 官方 → 国内镜像（`ghfast.top`、`gh-proxy.com`），任一成功即停；下载先写入 `.tmp` 临时文件，校验大小后原子改名，避免残缺文件被当作模型使用。下载失败时窗口内可点"重试"（会重新遍历下载源）。
 
 ## 6. 构建与运行
 
@@ -191,12 +188,9 @@ PrivacyScreenGuard/
 ├── PrivacyScreenGuard.sln              # 解决方案
 ├── assets/
 │   └── icon.svg                        # 应用图标设计源文件（矢量，盾牌+镜头+守护斜杠）
-├── models/                             # 模型目录（脚本下载，勿提交密钥类内容）
+├── models/                             # 模型目录（首次运行可自动下载）
 │   ├── face_detection_yunet_2023mar.onnx       # YuNet 检测模型（约 0.22 MB）
 │   └── face_recognition_sface_2021dec.onnx     # SFace 识别模型（约 36.9 MB）
-├── tools/
-│   ├── download_models.py              # 模型下载脚本（多源重试）
-│   └── build_icon.py                   # 图标构建：SVG → ICO/PNG（见下方说明）
 ├── src/PrivacyScreenGuard/             # 主项目（WPF，net8.0-windows）
 │   ├── App.xaml.cs                     # 入口：单实例/接线/热键/托盘/向导
 │   ├── app.manifest                    # PerMonitorV2 DPI 感知清单
@@ -218,6 +212,7 @@ PrivacyScreenGuard/
 │   │   ├── GuardStateMachine.cs        # 触发/恢复延迟状态机
 │   │   ├── MaskWindowManager.cs        # 多屏遮罩管理（截屏模糊）
 │   │   ├── ModelLocator.cs             # 模型文件定位
+│   │   ├── ModelDownloadService.cs     # 模型下载（首次运行，多源重试）
 │   │   ├── SettingsService.cs          # settings.json 读写
 │   │   ├── TemplateStore.cs            # 主人模板 DPAPI 加密存储
 │   │   ├── TrayIconService.cs          # 托盘图标与菜单
@@ -227,6 +222,7 @@ PrivacyScreenGuard/
 │   └── Windows/
 │       ├── MainWindow.xaml(.cs)        # 主窗口（设置/状态/清除生物特征）
 │       ├── SetupWizardWindow.xaml(.cs) # 首次注册向导（3~5 张）
+│       ├── ModelDownloadWindow.xaml(.cs) # 模型下载窗口（进度/重试/取消）
 │       └── MaskWindow.cs               # 遮罩窗口（点击穿透/置顶/物理像素定位）
 ├── tests/PrivacyScreenGuard.Tests/     # 单元测试（13 个：状态机+模板存储）
 └── publish/                            # dotnet publish 输出（发布后生成）
@@ -234,12 +230,6 @@ PrivacyScreenGuard/
 
 ### 图标修改
 
-应用图标的设计源文件是 `assets/icon.svg`（矢量）。改完 SVG 后运行：
+应用图标的设计源文件是 `assets/icon.svg`（矢量），`src/PrivacyScreenGuard/Assets/` 下是已生成好的成品（`icon.ico` 供 exe/窗口/快捷方式使用，PNG 供托盘使用），已随仓库提供，**构建项目无需任何额外工具**。
 
-```powershell
-python tools/build_icon.py
-```
-
-脚本会用 svglib 把 SVG 渲染成 PNG，并生成 `src/PrivacyScreenGuard/Assets/` 下的 `icon.ico`（多尺寸，供 exe / 窗口 / 桌面快捷方式使用）与托盘底图 PNG。重新 `dotnet build` 即生效，无需手工替换。
-
-> 依赖：`pip install svglib reportlab rlPyCairo pillow`（仅构建图标时需要，运行程序不需要）
+若要修改图标：编辑 `assets/icon.svg`，用任意 SVG 工具（Inkscape、Illustrator、在线转换服务等）导出为多尺寸 `.ico`（建议包含 16/24/32/48/64/128/256）覆盖 `Assets/icon.ico`，并导出 256×256 PNG 覆盖 `Assets/icon_256.png`，重新 `dotnet build` 即生效。

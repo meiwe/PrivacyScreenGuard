@@ -71,7 +71,31 @@ public partial class App : Application
         // 2. 加载设置
         Settings = SettingsService.Load();
 
-        // 3. 创建摄像头与推理服务；模型缺失等失败 → 中文提示 + 退出
+        // 3. 模型就绪检查：缺失时询问用户是否下载（这是本软件唯一的联网行为）
+        if (!ModelDownloadService.AllModelsPresent())
+        {
+            MessageBoxResult choice = MessageBox.Show(
+                "首次运行需要下载人脸模型文件（检测模型 + 识别模型，合计约 37 MB）。\n\n" +
+                "这是本软件唯一一次联网：模型来自 OpenCV Zoo 官方仓库；" +
+                "下载完成后，所有画面处理都在本地进行，不再有任何网络请求，也不会保存或上传任何画面。\n\n" +
+                "是否现在下载？",
+                "准备人脸模型", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (choice != MessageBoxResult.Yes)
+            {
+                Shutdown();
+                return;
+            }
+
+            var downloadWindow = new ModelDownloadWindow();
+            if (downloadWindow.ShowDialog() != true)
+            {
+                // 用户取消下载，或下载失败后关闭窗口
+                Shutdown();
+                return;
+            }
+        }
+
+        // 4. 创建摄像头与推理服务；模型损坏等失败 → 中文提示 + 退出
         GuardEngine? engine = null;
         CameraService? camera = null;
         FaceDetectionService? detector = null;
@@ -91,14 +115,14 @@ public partial class App : Application
             recognizer?.Dispose();
             MessageBox.Show(
                 "初始化守护引擎失败：\n" + ex.Message +
-                "\n\n请运行 tools/download_models.py 下载模型文件后重试。",
+                "\n\n模型文件可能损坏或不完整，请删除 models 目录后重新启动以下载模型。",
                 "启动失败", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
             return;
         }
         Engine = engine;
 
-        // 4. 主人模板与引擎配置
+        // 5. 主人模板与引擎配置
         bool ownerLoaded = TemplateStore.TryLoad(out float[] ownerFeature);
         if (ownerLoaded)
         {
@@ -106,10 +130,10 @@ public partial class App : Application
         }
         engine.Configure(Settings);
 
-        // 5. 遮罩窗口管理器（必须在 UI 线程创建）
+        // 6. 遮罩窗口管理器（必须在 UI 线程创建）
         Masks = new MaskWindowManager(Settings.MonitorMode, Settings.SelectedMonitors);
 
-        // 6. 遮罩动作事件（后台线程）→ UI 线程显示/隐藏遮罩（订阅方需幂等处理）
+        // 7. 遮罩动作事件（后台线程）→ UI 线程显示/隐藏遮罩（订阅方需幂等处理）
         engine.MaskActionRequested += action => Dispatcher.BeginInvoke(() =>
         {
             if (Masks is null)
@@ -129,20 +153,20 @@ public partial class App : Application
             }
         });
 
-        // 7. 状态事件（后台线程）→ 托盘图标与气泡（仅关键状态弹气泡）
+        // 8. 状态事件（后台线程）→ 托盘图标与气泡（仅关键状态弹气泡）
         engine.StatusChanged += status => Dispatcher.BeginInvoke(() => OnEngineStatusForTray(status));
 
-        // 8. 错误事件（后台线程）→ 托盘变红 + 中文前缀气泡
+        // 9. 错误事件（后台线程）→ 托盘变红 + 中文前缀气泡
         engine.EngineError += (error, message) => Dispatcher.BeginInvoke(() => OnEngineErrorForTray(error, message));
 
-        // 9. 托盘（向导流程与主窗口流程都需要，先创建）
+        // 10. 托盘（向导流程与主窗口流程都需要，先创建）
         _tray = new TrayIconService();
         _tray.ShowMainWindowRequested += () => Dispatcher.BeginInvoke(ShowMainWindow);
         _tray.TogglePauseResumeRequested += () => Dispatcher.BeginInvoke(TogglePauseResume);
         _tray.ExitRequested += () => Dispatcher.BeginInvoke(ShutdownForExit);
         _tray.SetStatus(ownerLoaded && Settings.CameraEnabled ? TrayStatus.Running : TrayStatus.Paused);
 
-        // 10. 未注册主人 → 先走向导；已注册 → 直接主窗口
+        // 11. 未注册主人 → 先走向导；已注册 → 直接主窗口
         if (!ownerLoaded)
         {
             var wizard = new SetupWizardWindow { Owner = null };

@@ -4,7 +4,8 @@ using System.IO;
 namespace PrivacyScreenGuard.Services;
 
 /// <summary>
-/// 模型文件定位：依次查找 可执行目录\models、当前工作目录\models。
+/// 模型文件定位：依次查找 可执行目录\models、当前工作目录\models、
+/// 开发目录上溯、%LOCALAPPDATA%\PrivacyScreenGuard\models（程序内下载的落点）。
 /// 开发期与单文件发布后均可正确找到 models 目录。
 /// </summary>
 public static class ModelLocator
@@ -20,7 +21,7 @@ public static class ModelLocator
     /// </summary>
     public static string? FindModelsDir()
     {
-        // 1. exe 同目录（发布后）
+        // 1. exe 同目录（发布后；也是程序内下载的首选落点）
         string exeDir = AppContext.BaseDirectory;
         string p1 = Path.Combine(exeDir, "models");
         if (Directory.Exists(p1)) return p1;
@@ -36,6 +37,10 @@ public static class ModelLocator
             string p3 = Path.Combine(up, "models");
             if (Directory.Exists(p3)) return p3;
         }
+
+        // 4. 用户数据目录（程序目录不可写时，模型下载到这里）
+        string p4 = Path.Combine(SettingsService.GetSettingsDir(), "models");
+        if (Directory.Exists(p4)) return p4;
 
         return null;
     }
