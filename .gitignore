@@ -1,0 +1,8 @@
+bin/
+obj/
+publish/
+*.user
+.vs/
+.trae/
+models/*.onnx
+*.bin.tmp

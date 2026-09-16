@@ -1,0 +1,174 @@
+<Window x:Class="PrivacyScreenGuard.Windows.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="摄像头隐私屏"
+        Width="860" Height="640"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 主体：各分区（内容超高时可滚动） -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12,12,12,6">
+
+                <!-- 1. 守护状态 -->
+                <GroupBox Header="守护状态" Padding="10" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="#FF2ECC40"
+                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="#FF27AE60"
+                                   Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <Button x:Name="BtnPauseResume" Content="暂停守护" Width="100" Margin="24,0,0,0"
+                                Padding="6,3"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 2. 检测参数 -->
+                <GroupBox Header="检测参数" Padding="10" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="90"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32"/>
+                            <RowDefinition Height="32"/>
+                            <RowDefinition Height="32"/>
+                            <RowDefinition Height="36"/>
+                            <RowDefinition Height="32"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="识别阈值" VerticalAlignment="Center"/>
+                        <Slider x:Name="SldThreshold" Grid.Column="1" Minimum="0.3" Maximum="0.9"
+                                TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                SmallChange="0.05" LargeChange="0.1" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtThresholdValue" Grid.Column="2" Text="0.55"
+                                   HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
+
+                        <TextBlock Text="触发延迟" Grid.Row="1" VerticalAlignment="Center"/>
+                        <Slider x:Name="SldTriggerDelay" Grid.Row="1" Grid.Column="1" Minimum="300" Maximum="800"
+                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtTriggerDelayValue" Grid.Row="1" Grid.Column="2" Text="500 ms"
+                                   HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
+
+                        <TextBlock Text="恢复延迟" Grid.Row="2" VerticalAlignment="Center"/>
+                        <Slider x:Name="SldRecoverDelay" Grid.Row="2" Grid.Column="1" Minimum="500" Maximum="1000"
+                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtRecoverDelayValue" Grid.Row="2" Grid.Column="2" Text="800 ms"
+                                   HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
+
+                        <TextBlock Text="检测帧率" Grid.Row="3" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="CmbFps" Grid.Row="3" Grid.Column="1" Width="140"
+                                  HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <ComboBoxItem Content="5 帧/秒"/>
+                            <ComboBoxItem Content="6 帧/秒"/>
+                            <ComboBoxItem Content="8 帧/秒"/>
+                            <ComboBoxItem Content="10 帧/秒"/>
+                        </ComboBox>
+
+                        <TextBlock Text="无人策略" Grid.Row="4" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="CmbNoFacePolicy" Grid.Row="4" Grid.Column="1" Width="140"
+                                  HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <ComboBoxItem Content="保持正常"/>
+                            <ComboBoxItem Content="触发锁定"/>
+                        </ComboBox>
+                    </Grid>
+                </GroupBox>
+
+                <!-- 3. 设备选择 -->
+                <GroupBox Header="设备选择" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="摄像头" Width="110" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CmbCamera" Width="300" DisplayMemberPath="Display"
+                                      VerticalAlignment="Center"/>
+                            <Button x:Name="BtnRefreshCameras" Content="刷新" Width="60" Padding="4,2"
+                                    Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="守护显示器" Width="110" VerticalAlignment="Center"/>
+                            <RadioButton x:Name="RbAllMonitors" Content="所有显示器" GroupName="MonitorMode"
+                                         IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                            <RadioButton x:Name="RbPrimaryMonitor" Content="仅主屏" GroupName="MonitorMode"
+                                         VerticalAlignment="Center" Margin="0,0,14,0"/>
+                            <RadioButton x:Name="RbSelectedMonitors" Content="自选" GroupName="MonitorMode"
+                                         VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ListBox x:Name="LstMonitors" Height="76" SelectionMode="Multiple" IsEnabled="False"
+                                 DisplayMemberPath="Display"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 4. 快捷与启动 -->
+                <GroupBox Header="快捷与启动" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="暂停/恢复热键" Width="110" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CmbHotkeyMods" Width="110" VerticalAlignment="Center">
+                                <ComboBoxItem Content="Ctrl+Alt" IsSelected="True"/>
+                                <ComboBoxItem Content="Ctrl+Shift"/>
+                                <ComboBoxItem Content="Alt+Shift"/>
+                            </ComboBox>
+                            <TextBox x:Name="TxtHotkeyKey" Width="56" MaxLength="3" Text="P"
+                                     TextAlignment="Center" VerticalAlignment="Center"
+                                     VerticalContentAlignment="Center" Margin="8,0,0,0"
+                                     ToolTip="主键支持 A-Z、0-9 或 F1-F12"/>
+                            <TextBlock Text="主键支持 A-Z、0-9 或 F1-F12" Margin="10,0,0,0"
+                                       Foreground="Gray" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox x:Name="ChkAutostart" Content="开机自动启动" VerticalAlignment="Center"
+                                      Margin="0,0,28,0"/>
+                            <CheckBox x:Name="ChkCameraEnabled" Content="启用摄像头守护" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 5. 遮罩外观 -->
+                <GroupBox Header="遮罩外观" Padding="10" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
+                        <Slider x:Name="SldBlur" Width="300" Minimum="0" Maximum="100" Value="50"
+                                VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlurValue" Text="50" MinWidth="44" Margin="10,0,0,0"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" Margin="10,0,0,0"
+                                   Foreground="Gray" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 6. 隐私与数据 -->
+                <GroupBox Header="隐私与数据" Padding="10" Margin="0,0,0,4">
+                    <StackPanel>
+                        <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储。"
+                                   Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        <Button x:Name="BtnClearTemplate" Content="清除主人人脸数据" Width="140" Padding="6,4"
+                                HorizontalAlignment="Left" Cursor="Hand"
+                                BorderBrush="#FFC0392B" Foreground="#FFC0392B"/>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 底部状态栏：版本 + 最新提示消息 -->
+        <Border Grid.Row="1" Background="#FFF0F0F0" BorderBrush="#FFDDDDDD" BorderThickness="0,1,0,0"
+                Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TxtVersion" Text="隐私屏" Foreground="Gray" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtStatusMessage" Grid.Column="1" Margin="20,0,0,0" Text="就绪"
+                           TextTrimming="CharacterEllipsis" Foreground="Gray" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

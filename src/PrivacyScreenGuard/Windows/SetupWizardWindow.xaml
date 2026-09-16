@@ -1,0 +1,72 @@
+<Window x:Class="PrivacyScreenGuard.Windows.SetupWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="摄像头隐私屏 - 首次引导"
+        Width="760" Height="590"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="14,10,14,8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 标题 -->
+            <RowDefinition Height="Auto"/> <!-- 说明文字 -->
+            <RowDefinition Height="Auto"/> <!-- 摄像头选择行 -->
+            <RowDefinition Height="*"/>    <!-- 预览区域（占据剩余空间） -->
+            <RowDefinition Height="Auto"/> <!-- 采集进度 -->
+            <RowDefinition Height="Auto"/> <!-- 操作按钮行 -->
+            <RowDefinition Height="Auto"/> <!-- 自动采集开关 -->
+            <RowDefinition Height="Auto"/> <!-- 底部状态栏 -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. 标题 -->
+        <TextBlock Grid.Row="0" Text="注册主人面孔" FontSize="20" FontWeight="Bold"/>
+
+        <!-- 2. 说明文字 -->
+        <TextBlock Grid.Row="1" Margin="0,3,0,6" FontSize="12" TextWrapping="Wrap" Foreground="#FF606060"
+                   Text="请正对摄像头采集 3–5 张正脸。画面仅在本地处理，不会保存、上传任何图像；最终仅保存加密后的人脸特征。"/>
+
+        <!-- 3. 摄像头选择行：设备下拉框 + 刷新按钮 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,6">
+            <TextBlock Text="摄像头：" FontSize="13" VerticalAlignment="Center"/>
+            <ComboBox x:Name="DeviceComboBox" Width="320" MinHeight="26" FontSize="13" DisplayMemberPath="Display"/>
+            <Button x:Name="RefreshDevicesButton" Content="刷新" MinWidth="64" MinHeight="26" Margin="8,0,0,0"
+                    FontSize="13" IsEnabled="False"/>
+        </StackPanel>
+
+        <!-- 4. 预览区域：黑底 + 摄像头画面 + 人脸状态叠加提示 -->
+        <Border Grid.Row="3" Background="Black" CornerRadius="4" ClipToBounds="True">
+            <Grid>
+                <Image x:Name="PreviewImage" Stretch="Uniform" MaxWidth="480" MaxHeight="360"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8"
+                        Background="#B0000000" CornerRadius="10" Padding="10,3">
+                    <TextBlock x:Name="FaceStatusText" Text="等待摄像头画面…" FontSize="13" Foreground="LightGray"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 5. 采集进度 -->
+        <TextBlock x:Name="ProgressText" Grid.Row="4" Margin="0,6,0,0" FontSize="13"
+                   Text="已采集 0 / 3（最多 5 张）"/>
+
+        <!-- 6. 操作按钮行 -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,4,0,0">
+            <Button x:Name="CaptureOneButton" Content="采集一张" MinWidth="96" MinHeight="28"
+                    FontSize="13" FontWeight="Bold" IsEnabled="False"/>
+            <Button x:Name="ResetCapturesButton" Content="重新采集" MinWidth="96" MinHeight="28"
+                    Margin="10,0,0,0" FontSize="13" IsEnabled="False"/>
+            <Button x:Name="FinishButton" Content="完成注册" MinWidth="96" MinHeight="28"
+                    Margin="10,0,0,0" FontSize="13" IsEnabled="False"/>
+            <Button x:Name="CancelButton" Content="取消" MinWidth="80" MinHeight="28" Margin="10,0,0,0" FontSize="13"/>
+        </StackPanel>
+
+        <!-- 7. 自动采集开关（默认开启） -->
+        <CheckBox x:Name="AutoCaptureCheckBox" Grid.Row="6" Margin="0,8,0,0" FontSize="13" IsChecked="True"
+                  Content="自动采集（检测到单人正脸时每 0.9 秒自动采集，默认开启）"/>
+
+        <!-- 8. 底部状态栏：错误 / 提示信息 -->
+        <Border Grid.Row="7" Margin="0,8,0,0" Background="#FFF4F4F4" CornerRadius="3" Padding="8,4">
+            <TextBlock x:Name="StatusText" FontSize="12" TextWrapping="Wrap" Foreground="DimGray"
+                       Text="正在初始化…"/>
+        </Border>
+    </Grid>
+</Window>
