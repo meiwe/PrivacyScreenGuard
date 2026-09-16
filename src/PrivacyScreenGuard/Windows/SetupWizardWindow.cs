@@ -404,7 +404,10 @@ public partial class SetupWizardWindow : Window
             return;
         }
 
-        // 选择当前阶段的队列与容量上限
+        // 侧脸阶段分两档角度：第 1 张约 30°（|shift|>0.20），第 2 张约 60°（|shift|>0.34）。
+        // 覆盖"轻微扭头"与"大幅扭头看侧屏"两种实际使用姿态。
+        double shift = FacePose.GetHorizontalShift(face);
+        double absShift = Math.Abs(shift);
         ConcurrentQueue<float[]> queue = stage switch
         {
             0 => _frontalFeatures,
@@ -412,7 +415,18 @@ public partial class SetupWizardWindow : Window
             _ => _rightTurnFeatures
         };
         int stageMax = stage == 0 ? MaxFrontalCaptures : MaxSideCaptures;
-        if (queue.Count >= stageMax)
+        if (stage > 0 && queue.Count == 1 && absShift < FacePose.StrongSideYawShiftRatio)
+        {
+            // 第 1 张已采，本张要求更大角度；自动采集静默等待，手动请求提示
+            if (Interlocked.Exchange(ref _captureRequested, 0) == 1)
+            {
+                Dispatcher.BeginInvoke(() => ShowStatus("再转多一点（约 60°，鼻子快对准侧面）后再采一张，覆盖更大角度", isError: true));
+            }
+            return;
+        }
+
+        int stageCount = queue.Count;
+        if (stageCount >= stageMax)
         {
             // 该阶段已采满：手动请求被消费并提示进入下一步
             if (Interlocked.Exchange(ref _captureRequested, 0) == 1)
@@ -438,7 +452,7 @@ public partial class SetupWizardWindow : Window
             queue.Enqueue(feature);
             Interlocked.Exchange(ref _lastCaptureTick, now);
 
-            Dispatcher.BeginInvoke(() => OnFeatureCaptured(stage));
+            Dispatcher.BeginInvoke(() => OnFeatureCaptured(stage, stageCount + 1));
         }
         catch (Exception ex)
         {
@@ -447,7 +461,7 @@ public partial class SetupWizardWindow : Window
     }
 
     /// <summary>采集成功后的 UI 更新（UI 线程）：三段进度、按钮可用性与状态栏提示。</summary>
-    private void OnFeatureCaptured(int stage)
+    private void OnFeatureCaptured(int stage, int stageNewCount)
     {
         RefreshProgressUi();
         ResetCapturesButton.IsEnabled = true;
@@ -457,7 +471,13 @@ public partial class SetupWizardWindow : Window
             1 => "左转头",
             _ => "右转头"
         };
-        ShowStatus($"【{stageName}】第 {StageCount(stage)} 张采集成功");
+        ShowStatus($"【{stageName}】第 {stageNewCount} 张采集成功");
+
+        // 侧脸阶段第 1 张完成 → 提示加大角度采第 2 张（覆盖约 60° 的大幅扭头）
+        if (stage > 0 && stageNewCount == 1)
+        {
+            ShowStatus($"【{stageName}】第 1 张成功！请再转多一点（约 60°）采第 2 张，覆盖大幅扭头的角度");
+        }
     }
 
     /// <summary>读取指定阶段已采张数。</summary>

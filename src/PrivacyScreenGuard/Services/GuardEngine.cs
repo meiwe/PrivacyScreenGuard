@@ -29,6 +29,12 @@ public sealed class GuardEngine : IDisposable
     /// <summary>推理异常上报节流间隔（毫秒）：至少间隔 10 秒报一次，避免刷屏。</summary>
     private const int InferenceErrorThrottleMs = 10_000;
 
+    /// <summary>
+    /// 侧脸匹配的自适应阈值折扣：侧脸特征与（含侧脸在内的）模板的相似度天然低于正脸，
+    /// 侧脸姿态下匹配阈值自动下调该值（0.55 → 0.47），降低主人扭头看侧屏的误判率。
+    /// </summary>
+    internal const double SideMatchThresholdDiscount = 0.08;
+
     /// <summary>浮点比较容差（用于判断帧率是否发生变化）。</summary>
     private const double FpsEpsilon = 0.001;
 
@@ -373,6 +379,14 @@ public sealed class GuardEngine : IDisposable
                 }
                 anyUsableFace = true;
 
+                // 姿态自适应阈值：侧脸（无论哪个方向）的跨姿态特征相似度天然偏低，
+                // 用正脸阈值判定会误判主人。检测到侧脸时阈值自动下调（陌生人侧脸与
+                // 主人模板的相似度通常远低于该值，安全性不受影响）。
+                bool isSide = FacePose.GetPoseKind(face) != FacePose.PoseKind.FrontalOrUnknown;
+                double effectiveThreshold = isSide
+                    ? threshold - SideMatchThresholdDiscount
+                    : threshold;
+
                 // 对齐产生的中间 Mat 用完立即 Dispose（隐私要求）
                 Mat aligned = _recognizer.AlignCrop(frame, face);
                 try
@@ -404,7 +418,7 @@ public sealed class GuardEngine : IDisposable
                     {
                         bestSim = bestTemplateSim;
                     }
-                    if (bestTemplateSim >= threshold)
+                    if (bestTemplateSim >= effectiveThreshold)
                     {
                         ownerFound = true;
                     }

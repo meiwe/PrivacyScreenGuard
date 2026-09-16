@@ -64,6 +64,33 @@ public class FacePoseTests
         Assert.True(FacePose.IsFrontalEnough(face, FrameW, FrameH) == false);
     }
 
+    [Theory]
+    [InlineData(0.25)]  // 约 30°：轻侧（≥0.20 门槛，未到 60° 档）
+    [InlineData(0.34)]  // 恰好达到 60° 档门槛
+    [InlineData(0.45)]  // 约 60°：大侧
+    public void 侧脸分档_30度与60度都满足采集门槛(double yawShift)
+    {
+        // 侧脸阶段第 1 张要求 |shift| ≥ 0.20（SideYawShiftRatio）；
+        // 注册向导第 2 张要求 |shift| ≥ 0.34（StrongSideYawShiftRatio），覆盖大幅扭头
+        var face = MakeFace(FrameW / 2, FrameH / 2, 160, yawShift);
+        Assert.True(FacePose.GetHorizontalShift(face) >= FacePose.SideYawShiftRatio);
+    }
+
+    [Fact]
+    public void 大角度档_门槛常量大于小角度档()
+    {
+        Assert.True(FacePose.StrongSideYawShiftRatio > FacePose.SideYawShiftRatio);
+    }
+
+    [Theory]
+    [InlineData(-0.30)]
+    [InlineData(-0.50)]
+    public void 反方向侧脸_取绝对值后同样满足采集门槛(double yawShift)
+    {
+        var face = MakeFace(FrameW / 2, FrameH / 2, 160, yawShift);
+        Assert.True(Math.Abs(FacePose.GetHorizontalShift(face)) >= FacePose.SideYawShiftRatio);
+    }
+
     [Fact]
     public void 人脸太靠画面边缘_视为不可判定()
     {
