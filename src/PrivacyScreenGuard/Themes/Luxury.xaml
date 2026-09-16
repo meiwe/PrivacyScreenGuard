@@ -72,4 +72,9 @@
         <Setter Property="Padding" Value="0"/>
         <Setter Property="FontSize" Value="14"/>
     </Style>
+
+    <!-- 统一主文本色：覆盖 WPF-UI 的默认近黑，全站正文统一为深空灰 #1D1D1F -->
+    <Style TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Fg.Primary}"/>
+    </Style>
 </ResourceDictionary>
