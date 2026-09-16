@@ -122,11 +122,11 @@ public partial class App : Application
         }
         Engine = engine;
 
-        // 5. 主人模板与引擎配置
-        bool ownerLoaded = TemplateStore.TryLoad(out float[] ownerFeature);
+        // 5. 主人多姿态模板与引擎配置
+        bool ownerLoaded = TemplateStore.TryLoadAll(out float[][] ownerFeatures);
         if (ownerLoaded)
         {
-            engine.SetOwnerTemplate(ownerFeature);
+            engine.SetOwnerTemplates(ownerFeatures);
         }
         engine.Configure(Settings);
 
@@ -176,10 +176,10 @@ public partial class App : Application
                 ShutdownForExit();
                 return;
             }
-            // 注册成功：重新加载模板并装填引擎
-            if (TemplateStore.TryLoad(out float[] feature))
+            // 注册成功：重新加载模板（含正脸 + 侧脸多姿态）并装填引擎
+            if (TemplateStore.TryLoadAll(out float[][] features))
             {
-                engine.SetOwnerTemplate(feature);
+                engine.SetOwnerTemplates(features);
             }
         }
 

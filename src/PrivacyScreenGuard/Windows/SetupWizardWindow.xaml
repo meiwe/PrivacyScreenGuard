@@ -10,6 +10,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- 标题 -->
             <RowDefinition Height="Auto"/> <!-- 说明文字 -->
+            <RowDefinition Height="Auto"/> <!-- 当前阶段提示（加粗高亮） -->
             <RowDefinition Height="Auto"/> <!-- 摄像头选择行 -->
             <RowDefinition Height="*"/>    <!-- 预览区域（占据剩余空间） -->
             <RowDefinition Height="Auto"/> <!-- 采集进度 -->
@@ -23,20 +24,26 @@
 
         <!-- 2. 说明文字 -->
         <TextBlock Grid.Row="1" Margin="0,3,0,6" FontSize="12" TextWrapping="Wrap" Foreground="#FF606060"
-                   Text="请正对摄像头采集 3–5 张正脸。画面仅在本地处理，不会保存、上传任何图像；最终仅保存加密后的人脸特征。"/>
+                   Text="分三步采集：正脸 → 左转头 → 右转头。多姿态特征能显著减少侧脸误判。画面仅在本地处理，不会保存、上传任何图像；最终仅保存加密后的人脸特征。"/>
 
-        <!-- 3. 摄像头选择行：设备下拉框 + 刷新按钮 -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,6">
+        <!-- 3. 当前阶段提示（醒目） -->
+        <Border Grid.Row="2" Background="#FFEAF2FB" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
+            <TextBlock x:Name="StageText" FontSize="15" FontWeight="Bold" Foreground="#FF1E3A5F"
+                       Text="步骤 1/3：请正对镜头，保持自然表情"/>
+        </Border>
+
+        <!-- 4. 摄像头选择行：设备下拉框 + 刷新按钮 -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,6">
             <TextBlock Text="摄像头：" FontSize="13" VerticalAlignment="Center"/>
             <ComboBox x:Name="DeviceComboBox" Width="320" MinHeight="26" FontSize="13" DisplayMemberPath="Display"/>
             <Button x:Name="RefreshDevicesButton" Content="刷新" MinWidth="64" MinHeight="26" Margin="8,0,0,0"
                     FontSize="13" IsEnabled="False"/>
         </StackPanel>
 
-        <!-- 4. 预览区域：黑底 + 摄像头画面 + 人脸状态叠加提示 -->
-        <Border Grid.Row="3" Background="Black" CornerRadius="4" ClipToBounds="True">
+        <!-- 5. 预览区域：黑底 + 摄像头画面 + 人脸状态叠加提示 -->
+        <Border Grid.Row="4" Background="Black" CornerRadius="4" ClipToBounds="True">
             <Grid>
-                <Image x:Name="PreviewImage" Stretch="Uniform" MaxWidth="480" MaxHeight="360"
+                <Image x:Name="PreviewImage" Stretch="Uniform" MaxWidth="480" MaxHeight="330"
                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8"
                         Background="#B0000000" CornerRadius="10" Padding="10,3">
@@ -45,27 +52,27 @@
             </Grid>
         </Border>
 
-        <!-- 5. 采集进度 -->
-        <TextBlock x:Name="ProgressText" Grid.Row="4" Margin="0,6,0,0" FontSize="13"
-                   Text="已采集 0 / 3（最多 5 张）"/>
+        <!-- 6. 采集进度（三段） -->
+        <TextBlock x:Name="ProgressText" Grid.Row="5" Margin="0,6,0,0" FontSize="13"
+                   Text="正脸 0/3 · 左转头 0/2 · 右转头 0/2"/>
 
-        <!-- 6. 操作按钮行 -->
-        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,4,0,0">
+        <!-- 7. 操作按钮行 -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,4,0,0">
             <Button x:Name="CaptureOneButton" Content="采集一张" MinWidth="96" MinHeight="28"
                     FontSize="13" FontWeight="Bold" IsEnabled="False"/>
-            <Button x:Name="ResetCapturesButton" Content="重新采集" MinWidth="96" MinHeight="28"
+            <Button x:Name="FinishButton" Content="下一步：左转头" MinWidth="120" MinHeight="28"
                     Margin="10,0,0,0" FontSize="13" IsEnabled="False"/>
-            <Button x:Name="FinishButton" Content="完成注册" MinWidth="96" MinHeight="28"
+            <Button x:Name="ResetCapturesButton" Content="全部重采" MinWidth="96" MinHeight="28"
                     Margin="10,0,0,0" FontSize="13" IsEnabled="False"/>
             <Button x:Name="CancelButton" Content="取消" MinWidth="80" MinHeight="28" Margin="10,0,0,0" FontSize="13"/>
         </StackPanel>
 
-        <!-- 7. 自动采集开关（默认开启） -->
-        <CheckBox x:Name="AutoCaptureCheckBox" Grid.Row="6" Margin="0,8,0,0" FontSize="13" IsChecked="True"
-                  Content="自动采集（检测到单人正脸时每 0.9 秒自动采集，默认开启）"/>
+        <!-- 8. 自动采集开关（默认开启） -->
+        <CheckBox x:Name="AutoCaptureCheckBox" Grid.Row="7" Margin="0,8,0,0" FontSize="13" IsChecked="True"
+                  Content="自动采集（检测到符合当前步骤姿态的单人时每 0.9 秒自动采集，默认开启）"/>
 
-        <!-- 8. 底部状态栏：错误 / 提示信息 -->
-        <Border Grid.Row="7" Margin="0,8,0,0" Background="#FFF4F4F4" CornerRadius="3" Padding="8,4">
+        <!-- 9. 底部状态栏：错误 / 提示信息 -->
+        <Border Grid.Row="8" Margin="0,8,0,0" Background="#FFF4F4F4" CornerRadius="3" Padding="8,4">
             <TextBlock x:Name="StatusText" FontSize="12" TextWrapping="Wrap" Foreground="DimGray"
                        Text="正在初始化…"/>
         </Border>

@@ -21,8 +21,63 @@ public static class FacePose
     /// </remarks>
     public const double MaxYawShiftRatio = 0.18;
 
+    /// <summary>注册侧脸模板所需的最小水平偏移比例（保证采到的是"够侧"的姿态）。</summary>
+    public const double SideYawShiftRatio = 0.20;
+
     /// <summary>人脸框贴近画面边缘的比例阈值：框边缘距画面边界小于此比例视为"贴边"。</summary>
     public const double EdgeMarginRatio = 0.04;
+
+    /// <summary>人脸朝向类别（按鼻尖相对双眼中心的水平偏移方向划分）。</summary>
+    public enum PoseKind
+    {
+        /// <summary>正脸（偏移在容忍范围内）或姿态不可判定。</summary>
+        FrontalOrUnknown,
+
+        /// <summary>侧脸-画面左向（鼻尖偏向画面左侧；对应用户向自己的右侧转头）。</summary>
+        LookingLeftInFrame,
+
+        /// <summary>侧脸-画面右向（鼻尖偏向画面右侧；对应用户向自己的左侧转头）。</summary>
+        LookingRightInFrame
+    }
+
+    /// <summary>
+    /// 计算鼻尖相对双眼中心的水平偏移（占人脸框宽度的比例，带符号）。
+    /// 正值 = 鼻尖偏向画面右侧（用户向自己的左侧转头）；负值 = 偏向画面左侧。
+    /// 关键点不完整或人脸框异常时返回 0。
+    /// </summary>
+    public static double GetHorizontalShift(FaceInfo face)
+    {
+        if (face.Landmarks is not { Length: 5 } || face.Box.Width <= 0)
+        {
+            return 0;
+        }
+
+        double eyeCenterX = (face.Landmarks[0].X + face.Landmarks[1].X) / 2.0;
+        return (face.Landmarks[2].X - eyeCenterX) / face.Box.Width;
+    }
+
+    /// <summary>
+    /// 判定人脸朝向类别：正脸（含不可判定）/ 画面左向侧脸 / 画面右向侧脸。
+    /// 供注册向导分阶段采集（"向左转头""向右转头"）时按姿态过滤帧。
+    /// </summary>
+    public static PoseKind GetPoseKind(FaceInfo face)
+    {
+        if (face.Landmarks is not { Length: 5 } || face.Box.Width <= 0)
+        {
+            return PoseKind.FrontalOrUnknown;
+        }
+
+        double shift = GetHorizontalShift(face);
+        if (shift > SideYawShiftRatio)
+        {
+            return PoseKind.LookingRightInFrame;
+        }
+        if (shift < -SideYawShiftRatio)
+        {
+            return PoseKind.LookingLeftInFrame;
+        }
+        return PoseKind.FrontalOrUnknown;
+    }
 
     /// <summary>
     /// 判断人脸是否"足够正脸"（可参与主人比对与遮罩判定）。

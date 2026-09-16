@@ -55,7 +55,7 @@ public sealed class GuardEngine : IDisposable
 
     // ---- 运行状态 ----
     private bool _paused;                              // 是否已暂停（受 _sync 保护）
-    private float[]? _ownerTemplate;                   // 主人模板（SetOwnerTemplate 存入副本）
+    private float[][]? _ownerTemplates;                // 主人多姿态模板（SetOwnerTemplates 存入副本）
     private volatile int _disposedFlag;                // 0=可用 1=已释放（Interlocked 保证仅 Dispose 一次）
     private long _lastStatusTick = long.MinValue / 2;  // 上次状态上报时刻（节流用，受 _sync 保护）
     private long _lastInferenceErrorTick = long.MinValue / 2; // 上次推理异常上报时刻（受 _sync 保护）
@@ -145,21 +145,36 @@ public sealed class GuardEngine : IDisposable
     }
 
     /// <summary>
-    /// 设置/更新主人特征模板（内部保存副本，外部数组后续修改不影响引擎）。
+    /// 设置/更新主人特征模板（支持多姿态：正脸 + 左右侧脸，内部保存副本）。
+    /// 比对时取与全部模板的最大相似度——任一姿态匹配即认定主人。
     /// 有模板后才能调用 <see cref="Start"/>。
     /// </summary>
-    public void SetOwnerTemplate(float[] feature)
+    public void SetOwnerTemplates(IReadOnlyList<float[]> features)
     {
-        ArgumentNullException.ThrowIfNull(feature);
+        ArgumentNullException.ThrowIfNull(features);
+        if (features.Count == 0)
+        {
+            throw new ArgumentException("至少需要一个主人特征模板。", nameof(features));
+        }
 
         // 保存副本，避免外部持有者修改同一数组导致比对结果漂移
-        var copy = new float[feature.Length];
-        Array.Copy(feature, copy, feature.Length);
+        var copies = new float[features.Count][];
+        for (int i = 0; i < features.Count; i++)
+        {
+            copies[i] = new float[features[i].Length];
+            Array.Copy(features[i], copies[i], features[i].Length);
+        }
 
         lock (_sync)
         {
-            _ownerTemplate = copy;
+            _ownerTemplates = copies;
         }
+    }
+
+    /// <summary>设置单个模板的便捷重载（等价于 SetOwnerTemplates(单元素列表)，兼容旧调用）。</summary>
+    public void SetOwnerTemplate(float[] feature)
+    {
+        SetOwnerTemplates(new[] { feature });
     }
 
     /// <summary>
@@ -170,7 +185,7 @@ public sealed class GuardEngine : IDisposable
     {
         lock (_sync)
         {
-            if (_ownerTemplate is null)
+            if (_ownerTemplates is null)
             {
                 EngineError?.Invoke(CameraError.Unknown, "尚未注册主人，请先完成主人注册后再启动守护");
                 return;
@@ -210,7 +225,7 @@ public sealed class GuardEngine : IDisposable
     {
         lock (_sync)
         {
-            if (_ownerTemplate is null)
+            if (_ownerTemplates is null)
             {
                 EngineError?.Invoke(CameraError.Unknown, "尚未注册主人，无法恢复守护");
                 return;
@@ -297,7 +312,8 @@ public sealed class GuardEngine : IDisposable
     }
 
     /// <summary>
-    /// 单帧处理：暂停检查 → 人脸检测 → 逐脸对齐/提特征/与主人模板比对 → 状态机判定 → 触发事件。
+    /// 单帧处理：暂停检查 → 人脸检测 → 逐脸对齐/提特征/与主人多姿态模板比对（取最大相似度）→
+    /// 状态机判定 → 触发事件。
     /// </summary>
     private void ProcessFrame(Mat frame)
     {
@@ -305,16 +321,16 @@ public sealed class GuardEngine : IDisposable
         // 避免 Configure/Pause 持锁调用 camera.Stop 时与帧回调互等
         bool paused;
         double threshold;
-        float[]? template;
+        float[][]? templates;
         lock (_sync)
         {
             paused = _paused;
             threshold = _ownerThreshold;
-            template = _ownerTemplate;
+            templates = _ownerTemplates;
         }
 
         // 已暂停（或尚无模板）→ 本帧直接丢弃
-        if (paused || template is null)
+        if (paused || templates is null || templates.Length == 0)
         {
             return;
         }
@@ -363,21 +379,32 @@ public sealed class GuardEngine : IDisposable
                 {
                     float[] feature = _recognizer.ExtractFeature(aligned);
 
-                    // 余弦相似度：IFaceRecognizer.CosineSimilarity 为 static abstract 成员，
-                    // 无法通过接口引用调用，故使用唯一具体实现的静态方法（纯数学运算，与注入实例无关）
-                    float sim = FaceRecognitionService.CosineSimilarity(feature, template);
-
-                    // 相似度异常（NaN）按低于阈值处理（-1 低于最小阈值 0.3）
-                    if (float.IsNaN(sim))
+                    // 与全部多姿态模板比对取最大相似度：
+                    // 任一姿态模板匹配（正脸/左侧/右侧）即认定主人，
+                    // 解决"主人扭头看侧屏，侧脸特征与正脸模板差异大而被误判"的问题
+                    float bestTemplateSim = float.NegativeInfinity;
+                    foreach (float[] template in templates)
                     {
-                        sim = -1f;
+                        // 余弦相似度：IFaceRecognizer.CosineSimilarity 为 static abstract 成员，
+                        // 无法通过接口引用调用，故使用唯一具体实现的静态方法（纯数学运算，与注入实例无关）
+                        float sim = FaceRecognitionService.CosineSimilarity(feature, template);
+
+                        // 相似度异常（NaN）按低于阈值处理（-1 低于最小阈值 0.3）
+                        if (float.IsNaN(sim))
+                        {
+                            sim = -1f;
+                        }
+                        if (sim > bestTemplateSim)
+                        {
+                            bestTemplateSim = sim;
+                        }
                     }
 
-                    if (sim > bestSim)
+                    if (bestTemplateSim > bestSim)
                     {
-                        bestSim = sim;
+                        bestSim = bestTemplateSim;
                     }
-                    if (sim >= threshold)
+                    if (bestTemplateSim >= threshold)
                     {
                         ownerFound = true;
                     }

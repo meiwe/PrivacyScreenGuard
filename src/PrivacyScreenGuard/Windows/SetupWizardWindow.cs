@@ -16,6 +16,11 @@ using PrivacyScreenGuard.Services;
 // OpenCvSharp.Window 与 WPF Window 同名，显式消歧
 using Window = System.Windows.Window;
 using Brushes = System.Windows.Media.Brushes;
+// WinForms 与 WPF 的 MessageBox 系列同名，向导确认弹窗使用 WPF 版本
+using MessageBox = System.Windows.MessageBox;
+using MessageBoxButton = System.Windows.MessageBoxButton;
+using MessageBoxImage = System.Windows.MessageBoxImage;
+using MessageBoxResult = System.Windows.MessageBoxResult;
 
 namespace PrivacyScreenGuard.Windows;
 
@@ -26,11 +31,17 @@ namespace PrivacyScreenGuard.Windows;
 /// </summary>
 public partial class SetupWizardWindow : Window
 {
-    /// <summary>完成注册所需的最少采集张数。</summary>
-    private const int MinCaptures = 3;
+    /// <summary>正脸阶段最少采集张数（必填）。</summary>
+    private const int MinFrontalCaptures = 3;
 
-    /// <summary>允许采集的最大张数。</summary>
-    private const int MaxCaptures = 5;
+    /// <summary>正脸阶段最多采集张数。</summary>
+    private const int MaxFrontalCaptures = 5;
+
+    /// <summary>单个侧脸阶段的最少推荐张数（未达到也可完成注册，仅提示）。</summary>
+    private const int MinSideCaptures = 1;
+
+    /// <summary>单个侧脸阶段最多采集张数。</summary>
+    private const int MaxSideCaptures = 2;
 
     /// <summary>预览采集帧率（FPS）。</summary>
     private const double PreviewFps = 15;
@@ -44,6 +55,9 @@ public partial class SetupWizardWindow : Window
     /// <summary>预览转换失败提示的节流间隔（毫秒），避免 15FPS 下刷屏。</summary>
     private const int PreviewErrorIntervalMs = 5000;
 
+    /// <summary>采集阶段：0=正脸（必填）→ 1=向左转头 → 2=向右转头。</summary>
+    private int _stage;
+
     private CameraService? _camera;
 
     /// <summary>人脸检测服务；模型缺失时为 null（采集功能禁用，窗口不崩溃）。</summary>
@@ -52,8 +66,14 @@ public partial class SetupWizardWindow : Window
     /// <summary>人脸特征服务；模型缺失时为 null（采集功能禁用，窗口不崩溃）。</summary>
     private FaceRecognitionService? _recognizer;
 
-    /// <summary>已采集的特征队列（后台采集线程入队，UI 线程读取计数与清空）。</summary>
-    private readonly ConcurrentQueue<float[]> _features = new();
+    /// <summary>正脸阶段已采特征（后台采集线程入队，UI 线程读取计数与清空）。</summary>
+    private readonly ConcurrentQueue<float[]> _frontalFeatures = new();
+
+    /// <summary>左转头阶段已采特征（对应画面右向侧脸）。</summary>
+    private readonly ConcurrentQueue<float[]> _leftTurnFeatures = new();
+
+    /// <summary>右转头阶段已采特征（对应画面左向侧脸）。</summary>
+    private readonly ConcurrentQueue<float[]> _rightTurnFeatures = new();
 
     /// <summary>手动"采集一张"请求标志：1 表示有请求，采集线程用 Interlocked 消费。</summary>
     private int _captureRequested;
@@ -178,8 +198,9 @@ public partial class SetupWizardWindow : Window
         DeviceComboBox.SelectedIndex = 0;
         if (errors.Count == 0)
         {
-            ShowStatus("初始化完成，请正对摄像头进行采集。");
+            ShowStatus("初始化完成，请按上方步骤提示依次采集：正脸 → 左转头 → 右转头。");
         }
+        RefreshProgressUi();
     }
 
     /// <summary>窗口关闭：先停采集并等待循环退出，再释放三个服务（避免后台线程访问已释放模型）。</summary>
@@ -347,16 +368,62 @@ public partial class SetupWizardWindow : Window
 
     /// <summary>
     /// 尝试从当前帧采集一张人脸特征（后台采集线程调用）：
-    /// 消费手动请求标志，或满足"自动采集开启 + 距上次采集 ≥900ms"时，
-    /// 对齐裁剪 → 提取 128 维特征 → 入队，并切回 UI 线程更新进度。
+    /// 1) 人脸必须位于画面中部（贴边不采）；2) 姿态必须符合当前阶段要求
+    /// （正脸阶段要正脸、左转头阶段要画面右向侧脸、右转头阶段要画面左向侧脸）；
+    /// 3) 消费手动请求标志，或满足"自动采集开启 + 距上次采集 ≥900ms"时，
+    /// 对齐裁剪 → 提取 128 维特征 → 入对应阶段的队列，并切回 UI 线程更新进度。
     /// </summary>
     private void TryCaptureFace(Mat frame, FaceInfo face, long now)
     {
         if (_recognizer is null) return;
 
+        // 姿态必须匹配当前阶段（防止采错：正脸阶段混入侧脸会让模板质量下降）
+        int stage = Interlocked.CompareExchange(ref _stage, 0, 0);
+        FacePose.PoseKind pose = FacePose.GetPoseKind(face);
+        bool poseMatches = stage switch
+        {
+            0 => pose == FacePose.PoseKind.FrontalOrUnknown
+                 && FacePose.IsFrontalEnough(face, frame.Width, frame.Height),
+            1 => pose == FacePose.PoseKind.LookingRightInFrame, // 用户向左转头 = 画面右向
+            2 => pose == FacePose.PoseKind.LookingLeftInFrame,  // 用户向右转头 = 画面左向
+            _ => false
+        };
+        if (!poseMatches || !FacePose.IsConfidentRegion(face, frame.Width, frame.Height))
+        {
+            // 手动请求时给出"姿态不对"的明确反馈（自动采集则静默等待）
+            if (Interlocked.Exchange(ref _captureRequested, 0) == 1)
+            {
+                string expect = stage switch
+                {
+                    0 => "正脸",
+                    1 => "向左转头的侧脸",
+                    _ => "向右转头的侧脸"
+                };
+                Dispatcher.BeginInvoke(() => ShowStatus($"当前姿态不符合要求，请调整后再采集（需要：{expect}）", isError: true));
+            }
+            return;
+        }
+
+        // 选择当前阶段的队列与容量上限
+        ConcurrentQueue<float[]> queue = stage switch
+        {
+            0 => _frontalFeatures,
+            1 => _leftTurnFeatures,
+            _ => _rightTurnFeatures
+        };
+        int stageMax = stage == 0 ? MaxFrontalCaptures : MaxSideCaptures;
+        if (queue.Count >= stageMax)
+        {
+            // 该阶段已采满：手动请求被消费并提示进入下一步
+            if (Interlocked.Exchange(ref _captureRequested, 0) == 1)
+            {
+                Dispatcher.BeginInvoke(() => ShowStatus($"当前步骤已采满 {stageMax} 张，请点击下一步。"));
+            }
+            return;
+        }
+
         // 无论是否真的采集，先消费手动标志，避免残留到后续帧误触发
         bool manualRequested = Interlocked.Exchange(ref _captureRequested, 0) == 1;
-        if (_features.Count >= MaxCaptures) return;
 
         bool autoEligible = !manualRequested
             && _autoCaptureEnabled
@@ -368,11 +435,10 @@ public partial class SetupWizardWindow : Window
             // 对齐裁剪到 112×112 → 提取 128 维特征 → 入队
             using Mat aligned = _recognizer.AlignCrop(frame, face);
             float[] feature = _recognizer.ExtractFeature(aligned);
-            _features.Enqueue(feature);
+            queue.Enqueue(feature);
             Interlocked.Exchange(ref _lastCaptureTick, now);
 
-            int count = _features.Count;
-            Dispatcher.BeginInvoke(() => OnFeatureCaptured(count));
+            Dispatcher.BeginInvoke(() => OnFeatureCaptured(stage));
         }
         catch (Exception ex)
         {
@@ -380,48 +446,141 @@ public partial class SetupWizardWindow : Window
         }
     }
 
-    /// <summary>采集成功后的 UI 更新（UI 线程）：进度、按钮可用性与状态栏提示。</summary>
-    private void OnFeatureCaptured(int count)
+    /// <summary>采集成功后的 UI 更新（UI 线程）：三段进度、按钮可用性与状态栏提示。</summary>
+    private void OnFeatureCaptured(int stage)
     {
-        ProgressText.Text = BuildProgressText(count);
-        FinishButton.IsEnabled = count >= MinCaptures;
+        RefreshProgressUi();
         ResetCapturesButton.IsEnabled = true;
-        ShowStatus($"第 {count} 张采集成功（相似度校验将在后台完成）");
+        string stageName = stage switch
+        {
+            0 => "正脸",
+            1 => "左转头",
+            _ => "右转头"
+        };
+        ShowStatus($"【{stageName}】第 {StageCount(stage)} 张采集成功");
     }
 
-    /// <summary>"采集一张"：置手动采集标志，由采集线程在下一帧单人正脸时消费。</summary>
+    /// <summary>读取指定阶段已采张数。</summary>
+    private int StageCount(int stage) => stage switch
+    {
+        0 => _frontalFeatures.Count,
+        1 => _leftTurnFeatures.Count,
+        _ => _rightTurnFeatures.Count
+    };
+
+    /// <summary>
+    /// 刷新三段进度文本与"下一步/完成注册"按钮状态：
+    /// 正脸 ≥3 才可进入下一阶段；最后阶段按钮文案变为"完成注册"。
+    /// </summary>
+    private void RefreshProgressUi()
+    {
+        int frontal = _frontalFeatures.Count;
+        int left = _leftTurnFeatures.Count;
+        int right = _rightTurnFeatures.Count;
+
+        ProgressText.Text = $"正脸 {frontal}/{MinFrontalCaptures} · 左转头 {left}/{MinSideCaptures}+ · 右转头 {right}/{MinSideCaptures}+";
+
+        FinishButton.Content = _stage switch
+        {
+            0 => "下一步：左转头",
+            1 => "下一步：右转头",
+            _ => "完成注册"
+        };
+        // 正脸采满才能推进；最后阶段始终可点（侧脸可跳过，由确认弹窗兜底）
+        FinishButton.IsEnabled = _stage > 0 || frontal >= MinFrontalCaptures;
+
+        // 阶段提示文字
+        StageText.Text = _stage switch
+        {
+            0 => $"步骤 1/3：请正对镜头，保持自然表情（已采 {frontal} 张）",
+            1 => $"步骤 2/3：请把头向【左】转约 30° 并保持（已采 {left} 张，可跳过）",
+            _ => $"步骤 3/3：请把头向【右】转约 30° 并保持（已采 {right} 张，可跳过）"
+        };
+    }
+
+    /// <summary>"采集一张"：置手动采集标志，由采集线程在下一帧符合当前阶段姿态时消费。</summary>
     private void OnCaptureOneClick(object sender, RoutedEventArgs e)
     {
         Interlocked.Exchange(ref _captureRequested, 1);
     }
 
-    /// <summary>"重新采集"：清空已采特征列表，进度归零。</summary>
+    /// <summary>"重新采集"：清空全部已采特征，进度归零并回到第一步。</summary>
     private void OnResetCapturesClick(object sender, RoutedEventArgs e)
     {
-        while (_features.TryDequeue(out _))
-        {
-            // 逐个取出即视为释放（float[] 由 GC 回收）
-        }
-        ProgressText.Text = BuildProgressText(0);
-        FinishButton.IsEnabled = false;
-        ShowStatus("已清空已采集的人脸特征，请重新采集。");
+        while (_frontalFeatures.TryDequeue(out _)) { }
+        while (_leftTurnFeatures.TryDequeue(out _)) { }
+        while (_rightTurnFeatures.TryDequeue(out _)) { }
+        _stage = 0;
+        RefreshProgressUi();
+        ShowStatus("已清空全部已采集的人脸特征，请从正脸开始重新采集。");
     }
 
     /// <summary>
-    /// "完成注册"：逐维平均所有特征 → L2 归一化 → 加密保存模板 → 关闭窗口并返回成功。
+    /// "下一步 / 完成注册"：阶段推进按钮。
+    /// 步骤 1（正脸 ≥3 张）→ 步骤 2（左转头）→ 步骤 3（右转头）→ 完成注册并保存。
     /// </summary>
     private void OnFinishClick(object sender, RoutedEventArgs e)
     {
-        if (_features.Count < MinCaptures)
+        // 尚未到最后阶段：推进阶段
+        if (_stage < 2)
         {
-            ShowStatus($"采集数量不足，请至少采集 {MinCaptures} 张正脸。", isError: true);
+            if (_stage == 0 && _frontalFeatures.Count < MinFrontalCaptures)
+            {
+                ShowStatus($"正脸至少需要 {MinFrontalCaptures} 张，还差 {MinFrontalCaptures - _frontalFeatures.Count} 张。",
+                    isError: true);
+                return;
+            }
+            _stage++;
+            RefreshProgressUi();
+            ShowStatus(_stage == 1
+                ? "进入左转头采集：把头向左转约 30°，正对屏幕保持即可自动采集（采 1~2 张后点下一步，也可直接跳过）"
+                : "进入右转头采集：把头向右转约 30°，正对屏幕保持即可自动采集（采 1~2 张后点击完成注册）");
             return;
+        }
+
+        // 最后阶段：完成注册 —— 组装多姿态模板保存
+        if (_frontalFeatures.Count < MinFrontalCaptures)
+        {
+            ShowStatus($"正脸至少需要 {MinFrontalCaptures} 张，请回到第一步补采。", isError: true);
+            return;
+        }
+
+        var allFeatures = new List<float[]>();
+        allFeatures.AddRange(_frontalFeatures.ToArray());
+        allFeatures.AddRange(_leftTurnFeatures.ToArray());
+        allFeatures.AddRange(_rightTurnFeatures.ToArray());
+
+        if (_leftTurnFeatures.Count < MinSideCaptures || _rightTurnFeatures.Count < MinSideCaptures)
+        {
+            // 侧脸不足：允许完成，但明确告知影响
+            MessageBoxResult choice = MessageBox.Show(
+                "侧脸样本不足（每个方向建议至少 1 张）。\n" +
+                "没有侧脸模板时，主人扭头看侧屏仍可能被误判为陌生人。\n\n" +
+                "仍要完成注册吗？（建议点\"否\"补采）",
+                "侧脸样本不足", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (choice != MessageBoxResult.Yes)
+            {
+                return;
+            }
         }
 
         try
         {
-            float[] averaged = AverageAndNormalize(_features.ToArray());
-            TemplateStore.Save(averaged);
+            // 每个姿态组内逐维平均 + L2 归一化（组内平均降噪），再整体保存为多姿态模板
+            var templates = new List<float[]>();
+            if (_frontalFeatures.Count > 0)
+            {
+                templates.Add(AverageAndNormalize(_frontalFeatures.ToArray()));
+            }
+            if (_leftTurnFeatures.Count > 0)
+            {
+                templates.Add(AverageAndNormalize(_leftTurnFeatures.ToArray()));
+            }
+            if (_rightTurnFeatures.Count > 0)
+            {
+                templates.Add(AverageAndNormalize(_rightTurnFeatures.ToArray()));
+            }
+            TemplateStore.Save(templates);
         }
         catch (Exception ex)
         {
@@ -503,12 +662,6 @@ public partial class SetupWizardWindow : Window
         ResetCapturesButton.IsEnabled = false;
         FinishButton.IsEnabled = false;
         AutoCaptureCheckBox.IsEnabled = false;
-    }
-
-    /// <summary>生成采集进度文本。</summary>
-    private static string BuildProgressText(int count)
-    {
-        return $"已采集 {count} / {MinCaptures}（最多 {MaxCaptures} 张）";
     }
 
     /// <summary>
