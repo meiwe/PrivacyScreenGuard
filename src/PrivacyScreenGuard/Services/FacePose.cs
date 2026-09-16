@@ -1,0 +1,85 @@
+using System;
+using OpenCvSharp;
+using PrivacyScreenGuard.Models;
+
+namespace PrivacyScreenGuard.Services;
+
+/// <summary>
+/// 人脸姿态/位置判定：利用 YuNet 的 5 关键点区分"正脸"与"侧脸/边缘脸"。
+///
+/// 背景：主人扭头看侧屏时，主摄像头拍到的是侧脸，相似度会下降而被误判为陌生人。
+/// 本类提供两个判据，供守护引擎把"不可靠观测"从遮罩判定中剔除：
+/// - IsFrontalEnough：关键点几何判断是否接近正脸（鼻尖相对双眼中心的水平偏移比例）。
+/// - IsConfidentRegion：人脸是否位于画面中部（贴边的人脸信息不全，不足以判定身份）。
+/// </summary>
+public static class FacePose
+{
+    /// <summary>鼻尖水平偏移占人脸宽度的最大容忍比例（超过即视为侧脸）。</summary>
+    /// <remarks>
+    /// 正脸时鼻尖大致位于双眼中心（偏差 < 0.05）；明显扭头时偏移可达 0.25 以上。
+    /// 取 0.18 兼顾灵敏度：轻微转头（找鼠标/瞥一眼）不误伤，看侧屏（持续大角度）能识别。
+    /// </remarks>
+    public const double MaxYawShiftRatio = 0.18;
+
+    /// <summary>人脸框贴近画面边缘的比例阈值：框边缘距画面边界小于此比例视为"贴边"。</summary>
+    public const double EdgeMarginRatio = 0.04;
+
+    /// <summary>
+    /// 判断人脸是否"足够正脸"（可参与主人比对与遮罩判定）。
+    /// 关键点缺失、几何异常时返回 false（不可判定 → 不触发遮罩，宁可漏报不误报）。
+    /// </summary>
+    /// <param name="face">人脸检测结果。</param>
+    /// <param name="frameWidth">帧宽度（像素）。</param>
+    /// <param name="frameHeight">帧高度（像素）。</param>
+    public static bool IsFrontalEnough(FaceInfo face, int frameWidth, int frameHeight)
+    {
+        // 关键点不完整 → 无法判断姿态，按"不可判定"处理（安全侧：不触发遮罩）
+        if (face.Landmarks is not { Length: 5 })
+        {
+            return false;
+        }
+
+        Point2f leftEye = face.Landmarks[0];
+        Point2f rightEye = face.Landmarks[1];
+        Point2f noseTip = face.Landmarks[2];
+
+        // 双眼中心
+        double eyeCenterX = (leftEye.X + rightEye.X) / 2.0;
+        double eyeSpan = Math.Abs(rightEye.X - leftEye.X);
+
+        // 双眼水平间距过小：可能是极侧脸（只剩一只眼的投影）或检测异常 → 不可判定
+        float faceWidth = face.Box.Width;
+        if (eyeSpan < faceWidth * 0.10 || faceWidth <= 0)
+        {
+            return false;
+        }
+
+        // 鼻尖相对双眼中心的水平偏移，归一化到人脸框宽度
+        double yawShift = Math.Abs(noseTip.X - eyeCenterX) / faceWidth;
+
+        return yawShift <= MaxYawShiftRatio;
+    }
+
+    /// <summary>
+    /// 判断人脸是否位于"可信区域"（画面中部，未贴边）。
+    /// 贴边的人脸可能是路过/部分入镜，特征不完整，不足以做出"陌生人"判定。
+    /// </summary>
+    public static bool IsConfidentRegion(FaceInfo face, int frameWidth, int frameHeight)
+    {
+        if (frameWidth <= 0 || frameHeight <= 0 || face.Box.Width <= 0 || face.Box.Height <= 0)
+        {
+            return false;
+        }
+
+        double marginX = frameWidth * EdgeMarginRatio;
+        double marginY = frameHeight * EdgeMarginRatio;
+
+        // 人脸框任一边越过"画面边界 - 余量"即视为贴边
+        bool nearLeft = face.Box.X < marginX;
+        bool nearRight = face.Box.Right > frameWidth - marginX;
+        bool nearTop = face.Box.Y < marginY;
+        bool nearBottom = face.Box.Bottom > frameHeight - marginY;
+
+        return !(nearLeft || nearRight || nearTop || nearBottom);
+    }
+}

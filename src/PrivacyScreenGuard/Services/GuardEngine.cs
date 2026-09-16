@@ -295,9 +295,16 @@ public sealed class GuardEngine : IDisposable
         List<FaceInfo> faces = _detector.Detect(frame);
 
         // 2. 逐人脸比对，得到本帧观测结论
+        //
+        // 姿态过滤（扭头看侧屏误判修复）：
+        // 只有"正脸 + 位于画面中部"的人脸才参与身份判定；
+        // 侧脸（主人扭头看侧屏）与贴边脸（路过/部分入镜）视为不可靠观测，
+        // 既不算主人也不算陌生人——宁可漏报不误报。
+        // 注意：全部人脸都不可靠时按"无有效观测"处理，不打断已有状态机计时。
         FrameObservation observation;
         int faceCount = faces.Count;
         double bestSim = double.NegativeInfinity;
+        bool hasUsableFace = false;
 
         if (faceCount == 0)
         {
@@ -306,8 +313,19 @@ public sealed class GuardEngine : IDisposable
         else
         {
             bool ownerFound = false;
+            bool anyUsableFace = false;
+
             foreach (FaceInfo face in faces)
             {
+                // 姿态/位置不可靠的人脸直接跳过（不做比对，节省推理开销）
+                bool usable = FacePose.IsFrontalEnough(face, frame.Width, frame.Height)
+                           && FacePose.IsConfidentRegion(face, frame.Width, frame.Height);
+                if (!usable)
+                {
+                    continue;
+                }
+                anyUsableFace = true;
+
                 // 对齐产生的中间 Mat 用完立即 Dispose（隐私要求）
                 Mat aligned = _recognizer.AlignCrop(frame, face);
                 try
@@ -339,7 +357,10 @@ public sealed class GuardEngine : IDisposable
                 }
             }
 
-            observation = ownerFound ? FrameObservation.OwnerPresent : FrameObservation.FaceButNoOwner;
+            hasUsableFace = anyUsableFace;
+            observation = ownerFound ? FrameObservation.OwnerPresent
+                        : anyUsableFace ? FrameObservation.FaceButNoOwner
+                        : FrameObservation.NoFace; // 全是不可靠人脸 → 按无有效观测处理
         }
 
         // 3. 状态机判定（锁内：Configure 可能并发重建状态机）
@@ -360,7 +381,9 @@ public sealed class GuardEngine : IDisposable
         // 5. 常规状态文本（500ms 节流）
         RaiseStatus(observation switch
         {
-            FrameObservation.NoFace => "监控中：画面里暂时没有人",
+            FrameObservation.NoFace => hasUsableFace
+                ? "监控中：检测到侧脸/边缘脸，暂不判定身份"
+                : "监控中：画面里暂时没有人",
             FrameObservation.OwnerPresent => $"监控中：主人在画面里（相似度 {bestSim:F2}）",
             _ => $"监控中：发现 {faceCount} 张面孔，均未匹配到主人（相似度 {bestSim:F2}）"
         });
