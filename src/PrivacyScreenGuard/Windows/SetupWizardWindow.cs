@@ -509,13 +509,31 @@ public partial class SetupWizardWindow : Window
         // 正脸采满才能推进；最后阶段始终可点（侧脸可跳过，由确认弹窗兜底）
         FinishButton.IsEnabled = _stage > 0 || frontal >= MinFrontalCaptures;
 
-        // 阶段提示文字
+        // 阶段提示文字（侧脸阶段随已采张数动态变化：30° → 60° → 完成）
         StageText.Text = _stage switch
         {
             0 => $"步骤 1/3：请正对镜头，保持自然表情（已采 {frontal} 张）",
-            1 => $"步骤 2/3：请把头向【左】转约 30° 并保持（已采 {left} 张，可跳过）",
-            _ => $"步骤 3/3：请把头向【右】转约 30° 并保持（已采 {right} 张，可跳过）"
+            1 => DescribeSideStage("左", left),
+            _ => DescribeSideStage("右", right)
         };
+    }
+
+    /// <summary>
+    /// 生成侧脸阶段的动态提示：
+    /// 未采 → 引导 30°；已采 1 张 → 引导加大到 60°；已采满 → 提示可进入下一步。
+    /// </summary>
+    private string DescribeSideStage(string side, int captured)
+    {
+        int step = _stage + 1; // 显示用步骤号（2/3 或 3/3）
+        if (captured == 0)
+        {
+            return $"步骤 {step}/3：请把头向【{side}】转约 30° 并保持，采第 1 张";
+        }
+        if (captured < MaxSideCaptures)
+        {
+            return $"步骤 {step}/3：很好！请再转多一点（约 60°，鼻子快对准侧面）保持，采第 {captured + 1} 张";
+        }
+        return $"步骤 {step}/3：本步骤完成 ✓ 可点击【{(step == 2 ? "下一步：右转头" : "完成注册")}】";
     }
 
     /// <summary>"采集一张"：置手动采集标志，由采集线程在下一帧符合当前阶段姿态时消费。</summary>
