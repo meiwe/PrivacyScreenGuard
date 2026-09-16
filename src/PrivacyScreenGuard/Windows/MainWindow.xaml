@@ -44,6 +44,7 @@
                             <RowDefinition Height="32"/>
                             <RowDefinition Height="36"/>
                             <RowDefinition Height="32"/>
+                            <RowDefinition Height="32"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="识别阈值" VerticalAlignment="Center"/>
@@ -80,6 +81,18 @@
                             <ComboBoxItem Content="保持正常"/>
                             <ComboBoxItem Content="触发锁定"/>
                         </ComboBox>
+
+                        <TextBlock Text="多人在场" Grid.Row="5" VerticalAlignment="Center"
+                                   ToolTip="画面中同时出现主人和其他人时的处理方式"/>
+                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+                            <ComboBox x:Name="CmbMultiPerson" Width="190" HorizontalAlignment="Left"
+                                      VerticalAlignment="Center">
+                                <ComboBoxItem Content="主人在场即放行"/>
+                                <ComboBoxItem Content="有陌生人即遮罩"/>
+                            </ComboBox>
+                            <TextBlock Text="给别人看屏幕时选放行" Margin="10,0,0,0"
+                                       Foreground="Gray" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </Grid>
                 </GroupBox>
 

@@ -37,6 +37,12 @@ public sealed class AppSettings
     /// <summary>无人脸时的策略（默认保持正常，复用 CoreTypes 中的枚举）。</summary>
     public NoFacePolicy NoFacePolicy { get; set; } = NoFacePolicy.KeepNormal;
 
+    /// <summary>
+    /// 多人在场时的策略（默认主人在场即放行，适合演示/给别人看屏幕）；
+    /// "有陌生人即遮罩"下即使主人也在场，出现未匹配主人的人脸也会遮罩。
+    /// </summary>
+    public MultiPersonPolicy MultiPersonPolicy { get; set; } = MultiPersonPolicy.OwnerPresenceOpens;
+
     /// <summary>摄像头索引（默认 0）。</summary>
     public int CameraIndex { get; set; } = 0;
 

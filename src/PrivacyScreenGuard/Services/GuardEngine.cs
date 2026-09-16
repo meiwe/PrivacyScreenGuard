@@ -50,6 +50,7 @@ public sealed class GuardEngine : IDisposable
     private int _cameraIndex = 0;                      // 摄像头索引（Start 时传给摄像头）
     private double _darkThreshold = 18;                // 暗光阈值（仅记录；实际生效需重建 CameraService）
     private bool _strictPoseMode;                      // 严格姿态模式：侧脸/贴边脸也参与陌生人判定
+    private MultiPersonPolicy _multiPersonPolicy = MultiPersonPolicy.OwnerPresenceOpens; // 多人在场策略
     private GuardStateMachine _stateMachine = new();   // 状态机（Configure 时整体重建，旧的丢弃）
 
     // ---- 运行状态 ----
@@ -118,6 +119,7 @@ public sealed class GuardEngine : IDisposable
             _cameraIndex = settings.CameraIndex;
             _darkThreshold = settings.DarkThreshold;
             _strictPoseMode = settings.StrictPoseMode;
+            _multiPersonPolicy = settings.MultiPersonPolicy;
 
             // 按新参数重建状态机（旧的丢弃），保证触发/恢复延迟与无人策略立即生效
             _stateMachine = new GuardStateMachine(settings.TriggerDelayMs, settings.RecoverDelayMs,
@@ -244,6 +246,30 @@ public sealed class GuardEngine : IDisposable
     }
 
     /// <summary>
+    /// 把一帧的比对结果解析为观测结论（纯函数，便于单元测试多人在场策略）。
+    /// </summary>
+    /// <param name="ownerFound">帧内是否存在匹配主人的（可用）人脸。</param>
+    /// <param name="unmatchedFaces">参与判定但未匹配主人的人脸数。</param>
+    /// <param name="anyUsableFace">帧内是否存在参与判定的人脸（宽松模式下=正脸中部脸）。</param>
+    /// <param name="ownerPresenceOpens">多人在场策略：true=主人在场即放行；false=有陌生人即遮罩。</param>
+    internal static FrameObservation ResolveObservation(bool ownerFound, int unmatchedFaces,
+        bool anyUsableFace, bool ownerPresenceOpens)
+    {
+        if (ownerFound)
+        {
+            // 严格多人在场策略：主人在场但同框有陌生人 → 仍然视为风险
+            if (!ownerPresenceOpens && unmatchedFaces > 0)
+            {
+                return FrameObservation.FaceButNoOwner;
+            }
+            return FrameObservation.OwnerPresent;
+        }
+
+        // 无主人在场：有可判定人脸 → 风险；全是侧脸/贴边（宽松模式被跳过）→ 无有效观测
+        return anyUsableFace ? FrameObservation.FaceButNoOwner : FrameObservation.NoFace;
+    }
+
+    /// <summary>
     /// 帧回调入口（摄像头后台采集线程）：帧所有权归引擎，无论任何路径都必须释放。
     /// 绝不向采集线程抛出异常（否则采集循环会终止）。
     /// </summary>
@@ -317,6 +343,7 @@ public sealed class GuardEngine : IDisposable
         {
             bool ownerFound = false;
             bool anyUsableFace = false;
+            int unmatchedFaces = 0; // 参与判定且未匹配到主人的人脸数（多人在场策略使用）
 
             foreach (FaceInfo face in faces)
             {
@@ -354,6 +381,10 @@ public sealed class GuardEngine : IDisposable
                     {
                         ownerFound = true;
                     }
+                    else
+                    {
+                        unmatchedFaces++;
+                    }
                 }
                 finally
                 {
@@ -362,9 +393,10 @@ public sealed class GuardEngine : IDisposable
             }
 
             hasUsableFace = anyUsableFace;
-            observation = ownerFound ? FrameObservation.OwnerPresent
-                        : anyUsableFace ? FrameObservation.FaceButNoOwner
-                        : FrameObservation.NoFace; // 全是不可靠人脸 → 按无有效观测处理
+
+            // 多人在场策略：主人在场时是否因"同框的陌生人"而遮罩
+            bool ownerPresenceOpens = _multiPersonPolicy == MultiPersonPolicy.OwnerPresenceOpens;
+            observation = ResolveObservation(ownerFound, unmatchedFaces, anyUsableFace, ownerPresenceOpens);
         }
 
         // 3. 状态机判定（锁内：Configure 可能并发重建状态机）

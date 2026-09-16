@@ -76,6 +76,7 @@ public partial class MainWindow : Window
         ChkStrictPose.Unchecked += OnStrictPoseToggled;
         CmbFps.SelectionChanged += OnFpsChanged;
         CmbNoFacePolicy.SelectionChanged += OnNoFacePolicyChanged;
+        CmbMultiPerson.SelectionChanged += OnMultiPersonChanged;
         CmbCamera.SelectionChanged += OnCameraChanged;
         BtnRefreshCameras.Click += OnRefreshCamerasClick;
         RbAllMonitors.Checked += OnMonitorModeChanged;
@@ -141,6 +142,7 @@ public partial class MainWindow : Window
             ChkStrictPose.IsChecked = _settings.StrictPoseMode;
             CmbFps.SelectedIndex = NearestFpsIndex(_settings.CaptureFps);
             CmbNoFacePolicy.SelectedIndex = _settings.NoFacePolicy == NoFacePolicy.Lock ? 1 : 0;
+            CmbMultiPerson.SelectedIndex = _settings.MultiPersonPolicy == MultiPersonPolicy.StrangerTriggersMask ? 1 : 0;
 
             // 设备选择（摄像头下拉由 RefreshCamerasAsync 异步填充）
             switch (_settings.MonitorMode)
@@ -391,6 +393,25 @@ public partial class MainWindow : Window
             ? NoFacePolicy.Lock
             : NoFacePolicy.KeepNormal;
         SaveAndConfigure();
+    }
+
+    /// <summary>
+    /// 多人在场策略变更：
+    /// 放行模式 = 主人在场即不遮罩（给别人看屏幕方便）；严格模式 = 出现陌生人脸即遮罩（即使主人也在场）。
+    /// </summary>
+    private void OnMultiPersonChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+        {
+            return;
+        }
+        _settings.MultiPersonPolicy = CmbMultiPerson.SelectedIndex == 1
+            ? MultiPersonPolicy.StrangerTriggersMask
+            : MultiPersonPolicy.OwnerPresenceOpens;
+        SaveAndConfigure();
+        ShowMessage(_settings.MultiPersonPolicy == MultiPersonPolicy.StrangerTriggersMask
+            ? "多人在场：有陌生人即遮罩（即使你也在画面里）"
+            : "多人在场：主人在场即放行（给别人看屏幕不用暂停守护）");
     }
 
     /// <summary>保存设置并让引擎按新参数重建状态机（帧率变化时引擎内部会自动重启采集）。</summary>
