@@ -1,18 +1,32 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--
-        明亮主题自定义画刷（背景/卡片/强调色/状态色）。
-        控件样式由 WPF-UI 的 Fluent ControlsDictionary 提供；
-        运行时 ThemeManager 替换本字典 + 调用 ApplicationThemeManager 完成整体切换。
+        明亮主题（Apple HIG 奢华极简风：珍珠白底 + 纯白卡片 + 低饱和点缀）。
+        文字透明度体系照搬苹果 label 语义：主文本实色、次级 60%、辅助 40%。
+        状态色全部低饱和，禁止纯红纯绿；强调色（香槟金）仅用于点缀。
     -->
-    <SolidColorBrush x:Key="Bg.Window" Color="#F3F4F6"/>
-    <SolidColorBrush x:Key="Bg.Card" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Bg.Border" Color="#D5DBE1"/>
+    <!-- 层级底色：窗口珍珠白，卡片 70% 白（在 Mica 材质上呈毛玻璃质感） -->
+    <SolidColorBrush x:Key="Bg.Window" Color="#F5F5F7"/>
+    <SolidColorBrush x:Key="Bg.Card" Color="#B3FFFFFF"/>
+    <SolidColorBrush x:Key="Bg.Border" Color="#14000000"/>   <!-- 8% 黑：极细分隔 -->
+    <SolidColorBrush x:Key="Bg.Input" Color="#F2F2F7"/>      <!-- 输入框浅灰填充 -->
+    <SolidColorBrush x:Key="Bg.Hover" Color="#0D000000"/>    <!-- 悬停：黑 5% 轻微加深 -->
+    <SolidColorBrush x:Key="Bg.Pressed" Color="#1A000000"/>  <!-- 按下：黑 10% -->
 
-    <SolidColorBrush x:Key="Fg.Secondary" Color="#5C6771"/>
+    <!-- 文字：主文本深空灰；次级/辅助用苹果 secondaryLabel / 40% 透明度 -->
+    <SolidColorBrush x:Key="Fg.Primary" Color="#FF1D1D1F"/>
+    <SolidColorBrush x:Key="Fg.Secondary" Color="#993C3C43"/> <!-- 60% -->
+    <SolidColorBrush x:Key="Fg.Tertiary" Color="#663C3C43"/>  <!-- 40% -->
 
-    <SolidColorBrush x:Key="Accent" Color="#0A6CDA"/>
-    <SolidColorBrush x:Key="Danger" Color="#C43127"/>
-    <SolidColorBrush x:Key="StatusOK" Color="#107C10"/>
-    <SolidColorBrush x:Key="StatusWarn" Color="#B7791F"/>
+    <!-- 主按钮（实心填充）：黑底白字，苹果风格主操作 -->
+    <SolidColorBrush x:Key="Solid.Fill" Color="#FF1D1D1F"/>
+    <SolidColorBrush x:Key="Solid.Foreground" Color="#FFFFFFFF"/>
+
+    <!-- 强调色：香槟金，仅用于呼吸灯外发光 / 聚焦线 / 点缀（面积 <5%） -->
+    <SolidColorBrush x:Key="Accent" Color="#FFD4AF37"/>
+
+    <!-- 状态色（低饱和）：运行=柔和绿，暂停=苹果灰，危险=砖红 -->
+    <SolidColorBrush x:Key="StatusOK" Color="#FF34A853"/>
+    <SolidColorBrush x:Key="StatusWarn" Color="#FF8E8E93"/>
+    <SolidColorBrush x:Key="Danger" Color="#FFC0453E"/>
 </ResourceDictionary>

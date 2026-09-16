@@ -4,7 +4,7 @@
         Title="摄像头隐私屏"
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
-        Width="860" Height="672"
+        Width="860" Height="720"
         MinWidth="760" MinHeight="600"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen">
@@ -39,14 +39,40 @@
                 <!-- 1. 守护状态 -->
                 <GroupBox Header="守护状态" Style="{StaticResource Card}">
                     <StackPanel Orientation="Horizontal">
+                        <!-- 状态点：柔和外发光 + 呼吸动画（3.2s 循环），颜色随状态由代码后置同步 -->
                         <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="{DynamicResource StatusOK}"
-                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="Bold"
+                                 VerticalAlignment="Center" Margin="0,0,8,0">
+                            <Ellipse.Effect>
+                                <DropShadowEffect x:Name="StatusGlow" BlurRadius="8" ShadowDepth="0" Opacity="0.8"
+                                                  Color="#34A853"/>
+                            </Ellipse.Effect>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                            <DoubleAnimation Storyboard.TargetName="StatusGlow" Storyboard.TargetProperty="Opacity"
+                                                             From="0.9" To="0.35" Duration="0:0:1.6">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="StatusGlow" Storyboard.TargetProperty="BlurRadius"
+                                                             From="6" To="12" Duration="0:0:1.6">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="SemiBold"
                                    VerticalAlignment="Center"/>
-                        <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="{DynamicResource StatusOK}"
+                        <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="{DynamicResource Fg.Secondary}"
                                    Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
-                        <Button x:Name="BtnPauseResume" Content="暂停守护" Width="100" Margin="24,0,0,0"
-                                Padding="6,3"/>
+                        <Button x:Name="BtnPauseResume" Content="暂停守护" Style="{StaticResource PrimaryButton}"
+                                MinWidth="100" Margin="24,0,0,0"/>
                     </StackPanel>
                 </GroupBox>
 
@@ -68,22 +94,24 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="识别阈值" VerticalAlignment="Center"/>
-                        <Slider x:Name="SldThreshold" Grid.Column="1" Minimum="0.3" Maximum="0.9"
+                        <Slider x:Name="SldThreshold" Grid.Column="1" Minimum="0.3" Maximum="0.9" Style="{StaticResource MinimalSlider}"
                                 TickFrequency="0.05" IsSnapToTickEnabled="True"
                                 SmallChange="0.05" LargeChange="0.1" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtThresholdValue" Grid.Column="2" Text="0.55"
+                        <TextBlock x:Name="TxtThresholdValue" Grid.Column="2" Text="0.55" FontFamily="Consolas"
                                    HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
 
                         <TextBlock Text="触发延迟" Grid.Row="1" VerticalAlignment="Center"/>
                         <Slider x:Name="SldTriggerDelay" Grid.Row="1" Grid.Column="1" Minimum="300" Maximum="800"
-                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtTriggerDelayValue" Grid.Row="1" Grid.Column="2" Text="500 ms"
+                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                Style="{StaticResource MinimalSlider}"/>
+                        <TextBlock x:Name="TxtTriggerDelayValue" Grid.Row="1" Grid.Column="2" Text="500 ms" FontFamily="Consolas"
                                    HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
 
                         <TextBlock Text="恢复延迟" Grid.Row="2" VerticalAlignment="Center"/>
                         <Slider x:Name="SldRecoverDelay" Grid.Row="2" Grid.Column="1" Minimum="500" Maximum="1000"
-                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtRecoverDelayValue" Grid.Row="2" Grid.Column="2" Text="800 ms"
+                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                Style="{StaticResource MinimalSlider}"/>
+                        <TextBlock x:Name="TxtRecoverDelayValue" Grid.Row="2" Grid.Column="2" Text="800 ms" FontFamily="Consolas"
                                    HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
 
                         <TextBlock Text="检测帧率" Grid.Row="3" VerticalAlignment="Center"/>
@@ -150,9 +178,10 @@
                                 <ComboBoxItem Content="Ctrl+Shift"/>
                                 <ComboBoxItem Content="Alt+Shift"/>
                             </ComboBox>
-                            <TextBox x:Name="TxtHotkeyKey" Width="56" MaxLength="3" Text="P"
+                            <TextBox x:Name="TxtHotkeyKey" Width="56" MaxLength="3" Text="P" MinHeight="32"
                                      TextAlignment="Center" VerticalAlignment="Center"
                                      VerticalContentAlignment="Center" Margin="8,0,0,0"
+                                     Style="{StaticResource MinimalTextBox}"
                                      ToolTip="主键支持 A-Z、0-9 或 F1-F12"/>
                             <TextBlock Text="主键支持 A-Z、0-9 或 F1-F12" Margin="10,0,0,0"
                                        Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
@@ -171,9 +200,9 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
                             <Slider x:Name="SldBlur" Width="300" Minimum="0" Maximum="100" Value="50"
-                                    VerticalAlignment="Center"/>
+                                    VerticalAlignment="Center" Style="{StaticResource MinimalSlider}"/>
                             <TextBlock x:Name="TxtBlurValue" Text="50" MinWidth="44" Margin="10,0,0,0"
-                                       VerticalAlignment="Center"/>
+                                       FontFamily="Consolas" VerticalAlignment="Center"/>
                             <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" Margin="10,0,0,0"
                                        Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
                         </StackPanel>

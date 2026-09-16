@@ -28,6 +28,23 @@ public partial class App : Application
     /// <summary>应用设置（OnStartup 阶段加载，主窗口与各服务共享同一实例）。</summary>
     public static AppSettings Settings { get; private set; } = new();
 
+    /// <summary>
+    /// 为窗口启用 Mica 材质（毛玻璃基底）。
+    /// Mica 仅 Windows 11 支持：失败时静默降级为系统默认底色，不影响任何功能。
+    /// </summary>
+    private static void EnableMica(Window window)
+    {
+        try
+        {
+            // WindowBackdrop 位于 Wpf.Ui.Controls 命名空间（4.3.0）
+            Wpf.Ui.Controls.WindowBackdrop.ApplyBackdrop(window, Wpf.Ui.Controls.WindowBackdropType.Mica);
+        }
+        catch
+        {
+            // Win10 / 组合特性不支持 → 保持纯色窗口底
+        }
+    }
+
     /// <summary>守护引擎单例（服务创建失败时为 null）。</summary>
     public static GuardEngine? Engine { get; private set; }
 
@@ -88,6 +105,7 @@ public partial class App : Application
             }
 
             var downloadWindow = new ModelDownloadWindow();
+            EnableMica(downloadWindow);
             if (downloadWindow.ShowDialog() != true)
             {
                 // 用户取消下载，或下载失败后关闭窗口
@@ -171,6 +189,7 @@ public partial class App : Application
         if (!ownerLoaded)
         {
             var wizard = new SetupWizardWindow { Owner = null };
+            EnableMica(wizard); // 毛玻璃基底：卡片半透明底色在 Mica 上呈现磨砂质感
             if (wizard.ShowDialog() != true)
             {
                 // 用户取消注册 → 无法继续守护 → 退出
@@ -185,6 +204,7 @@ public partial class App : Application
         }
 
         _mainWindow = new MainWindow();
+        EnableMica(_mainWindow);
         _mainWindow.Show();
         if (Settings.CameraEnabled)
         {

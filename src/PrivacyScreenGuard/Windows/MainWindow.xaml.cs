@@ -229,6 +229,14 @@ public partial class MainWindow : Window
     /// <summary>按资源键取当前主题画刷（跟随明暗主题自动变化）。</summary>
     private Brush ThemeBrush(string key) => (Brush)TryFindResource(key) ?? Brushes.Gray;
 
+    /// <summary>设置状态指示灯颜色，并同步呼吸灯的外发光颜色（柔和外发光）。</summary>
+    private void SetStatusLight(string brushKey)
+    {
+        var brush = (System.Windows.Media.SolidColorBrush)ThemeBrush(brushKey);
+        StatusLight.Fill = brush;
+        StatusGlow.Color = brush.Color;
+    }
+
     private void OnEngineStatusChanged(string status)
     {
         // 引擎事件在后台线程触发 → 封送 UI 线程
@@ -239,7 +247,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.BeginInvoke(() =>
         {
-            StatusLight.Fill = ThemeBrush("Danger"); // 错误：指示灯变红
+            SetStatusLight("Danger"); // 错误：指示灯变红
             ShowMessage($"{DescribeError(error)}{message}", isError: true);
         });
     }
@@ -258,11 +266,11 @@ public partial class MainWindow : Window
         StatusText.Text = status;
         if (status.Contains("监控中") || status.Contains("遮罩"))
         {
-            StatusLight.Fill = ThemeBrush("StatusOK"); // 运行中（含遮罩触发/解除，均属正常守护）
+            SetStatusLight("StatusOK"); // 运行中（含遮罩触发/解除，均属正常守护）
         }
         else if (status.Contains("已暂停") || status.Contains("守护已停止"))
         {
-            StatusLight.Fill = ThemeBrush("StatusWarn"); // 暂停 / 停止
+            SetStatusLight("StatusWarn"); // 暂停 / 停止（灰色）
         }
         UpdateEngineUi();
     }

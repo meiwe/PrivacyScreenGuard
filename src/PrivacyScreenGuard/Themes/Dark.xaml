@@ -1,17 +1,32 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--
-        深色主题自定义画刷（背景/卡片/强调色/状态色）。
+        深色主题（Apple HIG 奢华极简风：深空黑底 + 石墨灰卡片，禁止纯黑）。
         资源键与 Light.xaml 完全一致，运行时整体替换即可全局切换主题。
+        文字透明度照搬苹果暗色 label：primaryLabel 85% 白、secondary 60%、tertiary 40%。
     -->
-    <SolidColorBrush x:Key="Bg.Window" Color="#1E1E22"/>
-    <SolidColorBrush x:Key="Bg.Card" Color="#2A2A31"/>
-    <SolidColorBrush x:Key="Bg.Border" Color="#43434B"/>
+    <!-- 层级底色：深空黑窗口，石墨灰卡片（70% 透明叠加 Mica 呈磨砂质感） -->
+    <SolidColorBrush x:Key="Bg.Window" Color="#0D0D11"/>
+    <SolidColorBrush x:Key="Bg.Card" Color="#B31A1A1F"/>
+    <SolidColorBrush x:Key="Bg.Border" Color="#14FFFFFF"/>   <!-- 8% 白：极细分隔 -->
+    <SolidColorBrush x:Key="Bg.Input" Color="#FF232329"/>    <!-- 输入框：石墨上的填充 -->
+    <SolidColorBrush x:Key="Bg.Hover" Color="#14FFFFFF"/>    <!-- 悬停：白 8% 轻微提亮 -->
+    <SolidColorBrush x:Key="Bg.Pressed" Color="#24FFFFFF"/>  <!-- 按下：白 14% -->
 
-    <SolidColorBrush x:Key="Fg.Secondary" Color="#9DA3AD"/>
+    <!-- 文字：暗色 label 体系 -->
+    <SolidColorBrush x:Key="Fg.Primary" Color="#FFF5F5F7"/>
+    <SolidColorBrush x:Key="Fg.Secondary" Color="#99EBEBF5"/> <!-- 60% -->
+    <SolidColorBrush x:Key="Fg.Tertiary" Color="#66EBEBF5"/>  <!-- 40% -->
 
-    <SolidColorBrush x:Key="Accent" Color="#4CC2FF"/>
-    <SolidColorBrush x:Key="Danger" Color="#FF6B5E"/>
-    <SolidColorBrush x:Key="StatusOK" Color="#5BD75B"/>
-    <SolidColorBrush x:Key="StatusWarn" Color="#FFD75E"/>
+    <!-- 主按钮（实心填充）：暗色下反转为主白底黑字 -->
+    <SolidColorBrush x:Key="Solid.Fill" Color="#FFF5F5F7"/>
+    <SolidColorBrush x:Key="Solid.Foreground" Color="#FF0D0D11"/>
+
+    <!-- 强调色：香槟金（暗色下同样克制） -->
+    <SolidColorBrush x:Key="Accent" Color="#FFD4AF37"/>
+
+    <!-- 状态色（低饱和）：运行=苹果绿，暂停=系统灰，危险=柔和红 -->
+    <SolidColorBrush x:Key="StatusOK" Color="#FF30D158"/>
+    <SolidColorBrush x:Key="StatusWarn" Color="#FF98989F"/>
+    <SolidColorBrush x:Key="Danger" Color="#FFE5695E"/>
 </ResourceDictionary>
