@@ -9,10 +9,19 @@
     <!-- 托盘图标使用 WinForms 的 NotifyIcon，遮罩屏幕枚举使用 Screen 类 -->
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 应用图标：exe / 桌面快捷方式 / 任务栏统一使用 -->
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <RootNamespace>PrivacyScreenGuard</RootNamespace>
     <!-- 单文件发布时原生库（OpenCvSharp 的 dll）一并打包 -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 图标资源打包进程序集：窗口标题栏图标与托盘底图运行时经 pack URI 加载 -->
+    <Resource Include="Assets\icon.ico" />
+    <Resource Include="Assets\icon_32.png" />
+    <Resource Include="Assets\icon_256.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />

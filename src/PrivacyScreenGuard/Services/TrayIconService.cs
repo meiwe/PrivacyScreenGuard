@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -156,54 +157,35 @@ public sealed class TrayIconService : IDisposable
     }
 
     /// <summary>
-    /// 绘制托盘图标位图：深蓝圆角底 + 白色盾牌 + 深蓝对勾 + 右下角状态圆点（白描边）。
+    /// 绘制托盘图标位图：应用图标底图（SVG 渲染的盾牌 + 镜头 + 守护斜杠）+ 右下角状态圆点（白描边）。
     /// </summary>
     private static Bitmap DrawIconBitmap(TrayStatus status, int size)
     {
         var bitmap = new Bitmap(size, size);
         using Graphics g = Graphics.FromImage(bitmap);
         g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 
         float s = size;
         Color backColor = Color.FromArgb(30, 58, 95); // 深蓝
 
-        // 1. 深蓝圆角方块底
-        using (GraphicsPath bgPath = CreateRoundedRectPath(new RectangleF(0, 0, s, s), s * 0.22f))
-        using (var bgBrush = new SolidBrush(backColor))
+        // 1. 应用图标底图（与 exe/快捷方式图标同源，保证视觉统一）
+        using (Bitmap? baseIcon = LoadBaseIcon())
         {
-            g.FillPath(bgBrush, bgPath);
+            if (baseIcon is not null)
+            {
+                g.DrawImage(baseIcon, 0, 0, size, size);
+            }
+            else
+            {
+                // 兜底：资源缺失时仅画深蓝圆角底，保证托盘不出现空白图标
+                using GraphicsPath bgPath = CreateRoundedRectPath(new RectangleF(0, 0, s, s), s * 0.22f);
+                using var bgBrush = new SolidBrush(backColor);
+                g.FillPath(bgBrush, bgPath);
+            }
         }
 
-        // 2. 白色盾牌（简单多边形：上宽、下收尖）
-        PointF[] shield =
-        {
-            new(s * 0.26f, s * 0.18f),
-            new(s * 0.74f, s * 0.18f),
-            new(s * 0.74f, s * 0.50f),
-            new(s * 0.50f, s * 0.84f),
-            new(s * 0.26f, s * 0.50f),
-        };
-        using (var shieldBrush = new SolidBrush(Color.White))
-        {
-            g.FillPolygon(shieldBrush, shield);
-        }
-
-        // 3. 盾内深蓝对勾
-        PointF[] check =
-        {
-            new(s * 0.36f, s * 0.44f),
-            new(s * 0.46f, s * 0.55f),
-            new(s * 0.66f, s * 0.30f),
-        };
-        using (var checkPen = new Pen(backColor, s * 0.075f))
-        {
-            checkPen.StartCap = LineCap.Round;
-            checkPen.EndCap = LineCap.Round;
-            checkPen.LineJoin = LineJoin.Round;
-            g.DrawLines(checkPen, check);
-        }
-
-        // 4. 右下角状态圆点：绿=运行，黄=暂停，红=异常
+        // 2. 右下角状态圆点：绿=运行，黄=暂停，红=异常
         Color dotColor = status switch
         {
             TrayStatus.Running => Color.FromArgb(46, 204, 64),
@@ -226,6 +208,32 @@ public sealed class TrayIconService : IDisposable
         }
 
         return bitmap;
+    }
+
+    /// <summary>
+    /// 加载应用图标底图（由 tools/build_icon.py 从 assets/icon.svg 渲染，作为程序集资源打包）。
+    /// 用 256px 原图缩放，保证高 DPI 托盘也清晰；加载失败返回 null，由调用方兜底绘制。
+    /// </summary>
+    private static Bitmap? LoadBaseIcon()
+    {
+        try
+        {
+            var uri = new Uri("pack://application:,,,/Assets/icon_256.png");
+            Stream? stream = System.Windows.Application.GetResourceStream(uri)?.Stream;
+            if (stream is null)
+            {
+                return null;
+            }
+            using (stream)
+            {
+                return new Bitmap(stream);
+            }
+        }
+        catch
+        {
+            // 资源缺失或解码失败：不抛出，由调用方绘制兜底底色
+            return null;
+        }
     }
 
     /// <summary>创建圆角矩形路径（四角用 90° 圆弧拼接）。</summary>

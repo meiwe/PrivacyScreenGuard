@@ -189,14 +189,21 @@ Copy-Item -Recurse models publish\models
 ```text
 PrivacyScreenGuard/
 ├── PrivacyScreenGuard.sln              # 解决方案
+├── assets/
+│   └── icon.svg                        # 应用图标设计源文件（矢量，盾牌+镜头+守护斜杠）
 ├── models/                             # 模型目录（脚本下载，勿提交密钥类内容）
 │   ├── face_detection_yunet_2023mar.onnx       # YuNet 检测模型（约 0.22 MB）
 │   └── face_recognition_sface_2021dec.onnx     # SFace 识别模型（约 36.9 MB）
 ├── tools/
-│   └── download_models.py              # 模型下载脚本（多源重试）
+│   ├── download_models.py              # 模型下载脚本（多源重试）
+│   └── build_icon.py                   # 图标构建：SVG → ICO/PNG（见下方说明）
 ├── src/PrivacyScreenGuard/             # 主项目（WPF，net8.0-windows）
 │   ├── App.xaml.cs                     # 入口：单实例/接线/热键/托盘/向导
 │   ├── app.manifest                    # PerMonitorV2 DPI 感知清单
+│   ├── Assets/                         # 图标资产（由 build_icon.py 生成）
+│   │   ├── icon.ico                    # exe/窗口/快捷方式图标（多尺寸）
+│   │   ├── icon_32.png                 # 托盘底图
+│   │   └── icon_256.png                # 托盘底图高清源
 │   ├── Models/
 │   │   ├── AppSettings.cs              # 设置项与默认值、范围夹取
 │   │   ├── CoreTypes.cs                # 无人策略/遮罩动作等枚举
@@ -209,7 +216,7 @@ PrivacyScreenGuard/
 │   │   ├── FaceRecognitionService.cs   # SFace 对齐+128 维特征+余弦比对
 │   │   ├── GuardEngine.cs              # 守护引擎（帧处理主链路）
 │   │   ├── GuardStateMachine.cs        # 触发/恢复延迟状态机
-│   │   ├── MaskWindowManager.cs        # 多屏遮罩管理
+│   │   ├── MaskWindowManager.cs        # 多屏遮罩管理（截屏模糊）
 │   │   ├── ModelLocator.cs             # 模型文件定位
 │   │   ├── SettingsService.cs          # settings.json 读写
 │   │   ├── TemplateStore.cs            # 主人模板 DPAPI 加密存储
@@ -224,3 +231,15 @@ PrivacyScreenGuard/
 ├── tests/PrivacyScreenGuard.Tests/     # 单元测试（13 个：状态机+模板存储）
 └── publish/                            # dotnet publish 输出（发布后生成）
 ```
+
+### 图标修改
+
+应用图标的设计源文件是 `assets/icon.svg`（矢量）。改完 SVG 后运行：
+
+```powershell
+python tools/build_icon.py
+```
+
+脚本会用 svglib 把 SVG 渲染成 PNG，并生成 `src/PrivacyScreenGuard/Assets/` 下的 `icon.ico`（多尺寸，供 exe / 窗口 / 桌面快捷方式使用）与托盘底图 PNG。重新 `dotnet build` 即生效，无需手工替换。
+
+> 依赖：`pip install svglib reportlab rlPyCairo pillow`（仅构建图标时需要，运行程序不需要）
