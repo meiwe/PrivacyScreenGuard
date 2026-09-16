@@ -72,6 +72,8 @@ public partial class MainWindow : Window
         SldTriggerDelay.ValueChanged += OnTriggerDelayChanged;
         SldRecoverDelay.ValueChanged += OnRecoverDelayChanged;
         SldBlur.ValueChanged += OnBlurChanged;
+        ChkStrictPose.Checked += OnStrictPoseToggled;
+        ChkStrictPose.Unchecked += OnStrictPoseToggled;
         CmbFps.SelectionChanged += OnFpsChanged;
         CmbNoFacePolicy.SelectionChanged += OnNoFacePolicyChanged;
         CmbCamera.SelectionChanged += OnCameraChanged;
@@ -136,6 +138,7 @@ public partial class MainWindow : Window
             TxtBlurValue.Text = _settings.BlurStrength == 0
                 ? "纯黑"
                 : $"{_settings.BlurStrength}";
+            ChkStrictPose.IsChecked = _settings.StrictPoseMode;
             CmbFps.SelectedIndex = NearestFpsIndex(_settings.CaptureFps);
             CmbNoFacePolicy.SelectedIndex = _settings.NoFacePolicy == NoFacePolicy.Lock ? 1 : 0;
 
@@ -344,6 +347,23 @@ public partial class MainWindow : Window
         TxtBlurValue.Text = value == 0 ? "纯黑" : $"{value}";
         _settings.BlurStrength = value;
         SaveAndConfigure();
+    }
+
+    /// <summary>
+    /// 严格模式开关：开启后侧脸/贴边脸也参与陌生人判定（给旁人看屏幕时保持拦截）；
+    /// 关闭时只有正脸才触发（扭头看侧屏不误报）。写回设置并立即生效。
+    /// </summary>
+    private void OnStrictPoseToggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+        {
+            return;
+        }
+        _settings.StrictPoseMode = ChkStrictPose.IsChecked == true;
+        SaveAndConfigure();
+        ShowMessage(_settings.StrictPoseMode
+            ? "严格模式已开启：侧脸入镜也会遮罩（主人扭头看侧屏请先暂停守护或关闭此项）"
+            : "宽松模式已开启：只有正脸才触发遮罩，扭头看侧屏不会误报");
     }
 
     private void OnFpsChanged(object sender, SelectionChangedEventArgs e)

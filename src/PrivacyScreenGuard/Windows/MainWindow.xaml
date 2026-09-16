@@ -134,14 +134,22 @@
 
                 <!-- 5. 遮罩外观 -->
                 <GroupBox Header="遮罩外观" Padding="10" Margin="0,0,0,10">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
-                        <Slider x:Name="SldBlur" Width="300" Minimum="0" Maximum="100" Value="50"
-                                VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtBlurValue" Text="50" MinWidth="44" Margin="10,0,0,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" Margin="10,0,0,0"
-                                   Foreground="Gray" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
+                            <Slider x:Name="SldBlur" Width="300" Minimum="0" Maximum="100" Value="50"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtBlurValue" Text="50" MinWidth="44" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" Margin="10,0,0,0"
+                                       Foreground="Gray" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox x:Name="ChkStrictPose" Content="严格模式：侧脸也触发遮罩" VerticalAlignment="Center"
+                                      ToolTip="开启后：任何正脸或侧脸入镜且未匹配到主人都会遮罩（适合要防止旁人侧身偷看）；&#x0a;关闭时：只有正脸才触发，主人扭头看侧屏不会误触发"/>
+                            <TextBlock Text="给别人看屏幕时可保持开启；扭头看侧屏请关闭" Margin="10,0,0,0"
+                                       Foreground="Gray" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </StackPanel>
                 </GroupBox>
 

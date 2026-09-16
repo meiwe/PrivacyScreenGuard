@@ -61,6 +61,13 @@ public sealed class AppSettings
     /// <summary>遮罩模糊强度（0–100，默认 50）：0 = 纯黑遮罩；&gt;0 = 遮罩显示瞬间截屏并高斯模糊，值越大越模糊。</summary>
     public int BlurStrength { get; set; } = 50;
 
+    /// <summary>
+    /// 侧脸是否也参与陌生人判定（默认 false = 侧脸不判定，扭头看侧屏不触发遮罩）。
+    /// 设为 true 后，检测到任何人脸（含侧脸）且未匹配到主人就触发遮罩——
+    /// 适合"严格模式"，但主人扭头看侧屏时会被误判。
+    /// </summary>
+    public bool StrictPoseMode { get; set; } = false;
+
     /// <summary>帧平均亮度低于该值判定光线过暗（范围 0–255，默认 18）。</summary>
     public double DarkThreshold { get; set; } = 18;
 

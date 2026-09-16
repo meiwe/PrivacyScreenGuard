@@ -49,6 +49,7 @@ public sealed class GuardEngine : IDisposable
     private double _captureFps = 8;                    // 采集帧率（Start 时传给摄像头）
     private int _cameraIndex = 0;                      // 摄像头索引（Start 时传给摄像头）
     private double _darkThreshold = 18;                // 暗光阈值（仅记录；实际生效需重建 CameraService）
+    private bool _strictPoseMode;                      // 严格姿态模式：侧脸/贴边脸也参与陌生人判定
     private GuardStateMachine _stateMachine = new();   // 状态机（Configure 时整体重建，旧的丢弃）
 
     // ---- 运行状态 ----
@@ -116,6 +117,7 @@ public sealed class GuardEngine : IDisposable
             _captureFps = settings.CaptureFps;
             _cameraIndex = settings.CameraIndex;
             _darkThreshold = settings.DarkThreshold;
+            _strictPoseMode = settings.StrictPoseMode;
 
             // 按新参数重建状态机（旧的丢弃），保证触发/恢复延迟与无人策略立即生效
             _stateMachine = new GuardStateMachine(settings.TriggerDelayMs, settings.RecoverDelayMs,
@@ -296,11 +298,12 @@ public sealed class GuardEngine : IDisposable
 
         // 2. 逐人脸比对，得到本帧观测结论
         //
-        // 姿态过滤（扭头看侧屏误判修复）：
-        // 只有"正脸 + 位于画面中部"的人脸才参与身份判定；
+        // 姿态过滤（可在设置中关闭）：默认只有"正脸 + 位于画面中部"的人脸才参与身份判定；
         // 侧脸（主人扭头看侧屏）与贴边脸（路过/部分入镜）视为不可靠观测，
         // 既不算主人也不算陌生人——宁可漏报不误报。
-        // 注意：全部人脸都不可靠时按"无有效观测"处理，不打断已有状态机计时。
+        // 严格模式（StrictPoseMode=true）下不做姿态过滤：检测到任何人脸且未匹配主人即触发，
+        // 适合"要给别人看屏幕时也能保持拦截"的场景，但主人扭头看侧屏会被误判。
+        // 注意：宽松模式下全部人脸都不可靠时按"无有效观测"处理，不打断已有状态机计时。
         FrameObservation observation;
         int faceCount = faces.Count;
         double bestSim = double.NegativeInfinity;
@@ -317,9 +320,10 @@ public sealed class GuardEngine : IDisposable
 
             foreach (FaceInfo face in faces)
             {
-                // 姿态/位置不可靠的人脸直接跳过（不做比对，节省推理开销）
-                bool usable = FacePose.IsFrontalEnough(face, frame.Width, frame.Height)
-                           && FacePose.IsConfidentRegion(face, frame.Width, frame.Height);
+                // 严格模式：所有人脸都参与判定；宽松模式：跳过侧脸/贴边脸（省推理开销）
+                bool usable = _strictPoseMode
+                    || (FacePose.IsFrontalEnough(face, frame.Width, frame.Height)
+                     && FacePose.IsConfidentRegion(face, frame.Width, frame.Height));
                 if (!usable)
                 {
                     continue;
@@ -385,7 +389,9 @@ public sealed class GuardEngine : IDisposable
                 ? "监控中：检测到侧脸/边缘脸，暂不判定身份"
                 : "监控中：画面里暂时没有人",
             FrameObservation.OwnerPresent => $"监控中：主人在画面里（相似度 {bestSim:F2}）",
-            _ => $"监控中：发现 {faceCount} 张面孔，均未匹配到主人（相似度 {bestSim:F2}）"
+            _ => faceCount == 1 && bestSim < -0.5
+                ? "监控中：发现面孔，未匹配到主人"
+                : $"监控中：发现 {faceCount} 张面孔，均未匹配到主人（相似度 {bestSim:F2}）"
         });
     }
 
