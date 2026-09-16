@@ -404,8 +404,7 @@ public partial class SetupWizardWindow : Window
             return;
         }
 
-        // 侧脸阶段分两档角度：第 1 张约 30°（|shift|>0.20），第 2 张约 60°（|shift|>0.34）。
-        // 覆盖"轻微扭头"与"大幅扭头看侧屏"两种实际使用姿态。
+        // 侧脸阶段采集门槛：|shift| ≥ 0.20（约 30°），保证采到的是有效侧脸姿态
         double shift = FacePose.GetHorizontalShift(face);
         double absShift = Math.Abs(shift);
         ConcurrentQueue<float[]> queue = stage switch
@@ -415,12 +414,12 @@ public partial class SetupWizardWindow : Window
             _ => _rightTurnFeatures
         };
         int stageMax = stage == 0 ? MaxFrontalCaptures : MaxSideCaptures;
-        if (stage > 0 && queue.Count == 1 && absShift < FacePose.StrongSideYawShiftRatio)
+        if (stage > 0 && absShift < FacePose.SideYawShiftRatio)
         {
-            // 第 1 张已采，本张要求更大角度；自动采集静默等待，手动请求提示
+            // 姿态是侧向但角度太浅（介于正脸与 30° 之间）：手动请求时提示转够角度
             if (Interlocked.Exchange(ref _captureRequested, 0) == 1)
             {
-                Dispatcher.BeginInvoke(() => ShowStatus("再转多一点（约 60°，鼻子快对准侧面）后再采一张，覆盖更大角度", isError: true));
+                Dispatcher.BeginInvoke(() => ShowStatus("请再转多一点（约 30° 以上）后再采，太正的脸对侧脸模板帮助不大", isError: true));
             }
             return;
         }
@@ -472,12 +471,6 @@ public partial class SetupWizardWindow : Window
             _ => "右转头"
         };
         ShowStatus($"【{stageName}】第 {stageNewCount} 张采集成功");
-
-        // 侧脸阶段第 1 张完成 → 提示加大角度采第 2 张（覆盖约 60° 的大幅扭头）
-        if (stage > 0 && stageNewCount == 1)
-        {
-            ShowStatus($"【{stageName}】第 1 张成功！请再转多一点（约 60°）采第 2 张，覆盖大幅扭头的角度");
-        }
     }
 
     /// <summary>读取指定阶段已采张数。</summary>
@@ -519,8 +512,7 @@ public partial class SetupWizardWindow : Window
     }
 
     /// <summary>
-    /// 生成侧脸阶段的动态提示：
-    /// 未采 → 引导 30°；已采 1 张 → 引导加大到 60°；已采满 → 提示可进入下一步。
+    /// 生成侧脸阶段的提示：未采 → 引导 30° 保持；已采 → 提示可继续加采或进入下一步。
     /// </summary>
     private string DescribeSideStage(string side, int captured)
     {
@@ -529,11 +521,7 @@ public partial class SetupWizardWindow : Window
         {
             return $"步骤 {step}/3：请把头向【{side}】转约 30° 并保持，采第 1 张";
         }
-        if (captured < MaxSideCaptures)
-        {
-            return $"步骤 {step}/3：很好！请再转多一点（约 60°，鼻子快对准侧面）保持，采第 {captured + 1} 张";
-        }
-        return $"步骤 {step}/3：本步骤完成 ✓ 可点击【{(step == 2 ? "下一步：右转头" : "完成注册")}】";
+        return $"步骤 {step}/3：已采 {captured} 张 ✓ 可继续保持姿势加采，或点击【{(step == 2 ? "下一步：右转头" : "完成注册")}】";
     }
 
     /// <summary>"采集一张"：置手动采集标志，由采集线程在下一帧符合当前阶段姿态时消费。</summary>

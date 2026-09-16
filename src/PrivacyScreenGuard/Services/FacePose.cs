@@ -21,14 +21,8 @@ public static class FacePose
     /// </remarks>
     public const double MaxYawShiftRatio = 0.18;
 
-    /// <summary>注册侧脸模板所需的最小水平偏移比例（保证采到的是"够侧"的姿态）。</summary>
+    /// <summary>注册侧脸模板所需的最小水平偏移比例（保证采到的是"够侧"的姿态，约 30°）。</summary>
     public const double SideYawShiftRatio = 0.20;
-
-    /// <summary>
-    /// "大角度侧脸"门槛（约 60°）：侧脸阶段第二张模板要求达到该偏移，
-    /// 覆盖主人大幅扭头看侧屏的场景（90° 完全侧面五官不可见，检测会失效，不采集）。
-    /// </summary>
-    public const double StrongSideYawShiftRatio = 0.34;
 
     /// <summary>人脸框贴近画面边缘的比例阈值：框边缘距画面边界小于此比例视为"贴边"。</summary>
     public const double EdgeMarginRatio = 0.04;
