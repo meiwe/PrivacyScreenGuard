@@ -13,6 +13,8 @@
                 <!-- WPF-UI：Fluent 控件样式 + 官方明暗主题（ApplicationThemeManager 切换） -->
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
+                <!-- 隐式按钮覆盖（ghost 极简风）：必须位于 WPF-UI 字典之后才能生效 -->
+                <ResourceDictionary Source="pack://application:,,,/Themes/Luxury.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

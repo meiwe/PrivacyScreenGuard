@@ -12,6 +12,7 @@
     <SolidColorBrush x:Key="Bg.Input" Color="#F2F2F7"/>      <!-- 输入框浅灰填充 -->
     <SolidColorBrush x:Key="Bg.Hover" Color="#0D000000"/>    <!-- 悬停：黑 5% 轻微加深 -->
     <SolidColorBrush x:Key="Bg.Pressed" Color="#1A000000"/>  <!-- 按下：黑 10% -->
+    <SolidColorBrush x:Key="Switch.Off" Color="#26000000"/>  <!-- 开关关态：黑 15% -->
 
     <!-- 文字：主文本深空灰；次级/辅助用苹果 secondaryLabel / 40% 透明度 -->
     <SolidColorBrush x:Key="Fg.Primary" Color="#FF1D1D1F"/>

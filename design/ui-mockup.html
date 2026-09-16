@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>摄像头隐私屏 · 排版原型</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'SF Pro Display', 'SF Pro Text', '-apple-system', 'Segoe UI Variable', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei UI', 'sans-serif'],
+          mono: ['"SF Mono"', 'Cascadia Mono', 'Consolas', 'ui-monospace', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  /* ============ 滑块：2px 极细轨道 + 白色圆头，绝不方角 ============ */
+  input[type=range].lux-slider{
+    -webkit-appearance:none; appearance:none;
+    height:2px; border-radius:1px; background:#E5E5E5; outline:none; cursor:pointer;
+  }
+  html.dark input[type=range].lux-slider{ background:#3A3A40; }
+  input[type=range].lux-slider::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:16px; height:16px; border-radius:50%;
+    background:#FFFFFF; border:0.5px solid rgba(0,0,0,0.08);
+    box-shadow:0 1px 3px rgba(0,0,0,0.12);
+    transition:transform .3s cubic-bezier(.25,1,.5,1);
+  }
+  html.dark input[type=range].lux-slider::-webkit-slider-thumb{ background:#F5F5F7; }
+  input[type=range].lux-slider:hover::-webkit-slider-thumb{ transform:scale(1.05); }
+
+  /* ============ 呼吸灯：柔和外发光，无弹跳 ============ */
+  .breath{ position:relative; width:12px; height:12px; flex:none; }
+  .breath::before{
+    content:''; position:absolute; inset:-5px; border-radius:50%;
+    background:#34A853; filter:blur(5px);
+    animation:breath 3.2s ease-in-out infinite;
+  }
+  .breath::after{
+    content:''; position:absolute; inset:0; border-radius:50%;
+    background:#34A853;
+    animation:breath 3.2s ease-in-out infinite;
+  }
+  @keyframes breath{ 0%,100%{opacity:.35} 50%{opacity:.95} }
+
+  /* ============ 开关：苹果式胶囊，开启=墨色，克制无艳色 ============ */
+  .switch{ position:relative; display:inline-block; width:44px; height:26px; flex:none; cursor:pointer; }
+  .switch input{ display:none; }
+  .switch .track{
+    position:absolute; inset:0; border-radius:13px;
+    background:rgba(0,0,0,0.15);
+    transition:background .3s cubic-bezier(.25,1,.5,1);
+  }
+  html.dark .switch .track{ background:rgba(255,255,255,0.2); }
+  .switch .track::after{
+    content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+    background:#FFFFFF; box-shadow:0 1px 3px rgba(0,0,0,0.15);
+    transition:transform .3s cubic-bezier(.25,1,.5,1);
+  }
+  .switch input:checked + .track{ background:#1D1D1F; }
+  html.dark .switch input:checked + .track{ background:#F5F5F7; }
+  .switch input:checked + .track::after{ transform:translateX(18px); }
+  html.dark .switch input:checked + .track::after{ background:#1D1D1F; }
+</style>
+</head>
+<body class="font-sans antialiased bg-[#F5F5F7] dark:bg-[#0D0D11] text-[#1D1D1F] dark:text-white/85 min-h-screen transition-colors duration-300">
+
+<main class="max-w-[860px] mx-auto px-6 sm:px-8 pt-8 pb-0">
+
+  <!-- ================= 标题栏 ================= -->
+  <header class="flex items-center justify-between mb-10">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-[12px] bg-[#1D1D1F] dark:bg-white flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3L5 6v5c0 4.5 3 8.5 7 10 4-1.5 7-5.5 7-10V6l-7-3z"
+                stroke="#F5F5F7" stroke-width="1.6" stroke-linejoin="round" fill="none"
+                class="dark:stroke-[#0D0D11]"/>
+          <circle cx="12" cy="11" r="2.4" class="dark:fill-[#0D0D11]" fill="#F5F5F7"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-[17px] font-semibold tracking-tight leading-tight">摄像头隐私屏</h1>
+        <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40 mt-0.5">Camera Privacy Guard</p>
+      </div>
+    </div>
+    <button id="themeBtn" title="切换明亮 / 深色主题"
+            class="h-9 w-9 rounded-full border-[0.5px] border-black/10 dark:border-white/15 flex items-center justify-center text-[14px] hover:bg-black/[0.04] dark:hover:bg-white/[0.08] transition-colors duration-300">
+      <span id="themeIcon">☀︎</span>
+    </button>
+  </header>
+
+  <!-- ================= 状态面板（全窗最重点） ================= -->
+  <section class="rounded-3xl bg-white dark:bg-[#1A1A1F] border-[0.5px] border-black/5 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] p-8 mb-6">
+    <div class="flex items-start justify-between gap-6">
+      <div class="min-w-0">
+        <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40">Guard Status · 守护状态</p>
+        <div class="flex items-center gap-3.5 mt-4">
+          <span class="breath"></span>
+          <span class="text-[26px] font-semibold tracking-tight leading-tight">守护运行中</span>
+        </div>
+        <p class="mt-3 text-[12px] leading-relaxed text-black/40 dark:text-white/40">
+          检测中 · 最近相似度 <span class="font-mono text-black/60 dark:text-white/60">0.82</span>
+          <span class="mx-1.5">·</span>摄像头使用中
+        </p>
+      </div>
+      <button class="flex-none rounded-xl border-[0.5px] border-black/10 dark:border-white/15 px-5 py-2.5 text-[13px] font-medium tracking-wide hover:bg-black/[0.04] dark:hover:bg-white/[0.08] transition-colors duration-300">
+        暂停守护
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= 参数调节区 ================= -->
+  <section class="rounded-3xl bg-white dark:bg-[#1A1A1F] border-[0.5px] border-black/5 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] px-8 py-6 mb-6">
+    <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40 mb-2">Detection · 检测参数</p>
+
+    <!-- 每行：标签左 · 控件中 · 数值右（两端精确对齐），行间 hairline 分隔 -->
+    <div class="divide-y divide-black/5 dark:divide-white/5">
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">识别阈值</span>
+        <div class="flex items-center gap-5 flex-1 max-w-[400px]">
+          <input type="range" class="lux-slider flex-1 lux-sync" min="0.3" max="0.9" step="0.05" value="0.55">
+          <span class="font-mono text-[13px] w-11 text-right">0.55</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">触发延迟</span>
+        <div class="flex items-center gap-5 flex-1 max-w-[400px]">
+          <input type="range" class="lux-slider flex-1 lux-sync" min="300" max="800" step="50" value="500">
+          <span class="font-mono text-[13px] w-11 text-right">500</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">恢复延迟</span>
+        <div class="flex items-center gap-5 flex-1 max-w-[400px]">
+          <input type="range" class="lux-slider flex-1 lux-sync" min="500" max="1000" step="50" value="800">
+          <span class="font-mono text-[13px] w-11 text-right">800</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">检测帧率</span>
+        <div class="relative">
+          <select class="appearance-none rounded-lg border-[0.5px] border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.06] pl-3 pr-8 py-2 text-[13px] focus:outline-none focus:border-black/25 dark:focus:border-white/30 transition-colors duration-300">
+            <option>5 帧/秒</option><option selected>8 帧/秒</option><option>10 帧/秒</option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-black/40 dark:text-white/40 pointer-events-none" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">多人在场</span>
+        <div class="flex items-center gap-5">
+          <div class="relative">
+            <select class="appearance-none rounded-lg border-[0.5px] border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.06] pl-3 pr-8 py-2 text-[13px] focus:outline-none transition-colors duration-300">
+              <option>有陌生人即遮罩</option><option>主人在场即放行</option>
+            </select>
+            <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-black/40 dark:text-white/40 pointer-events-none" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="text-[11px] text-black/40 dark:text-white/40">给别人看屏幕时选放行</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 设备选择 ================= -->
+  <section class="rounded-3xl bg-white dark:bg-[#1A1A1F] border-[0.5px] border-black/5 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] px-8 py-6 mb-6">
+    <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40 mb-5">Devices · 设备选择</p>
+
+    <div class="flex items-center justify-between gap-8 py-2">
+      <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">摄像头</span>
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <select class="appearance-none rounded-lg border-[0.5px] border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.06] pl-3 pr-8 py-2 text-[13px] focus:outline-none transition-colors duration-300 min-w-[220px]">
+            <option>Integrated Camera (5-8 帧/秒)</option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-black/40 dark:text-white/40 pointer-events-none" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <button class="rounded-lg border-[0.5px] border-black/10 dark:border-white/15 px-4 py-2 text-[12px] font-medium tracking-wide hover:bg-black/[0.04] dark:hover:bg-white/[0.08] transition-colors duration-300">刷新</button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-8 py-3">
+      <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">守护显示器</span>
+      <div class="flex items-center gap-2">
+        <label class="cursor-pointer rounded-full border-[0.5px] border-black/10 dark:border-white/15 px-4 py-1.5 text-[12px] tracking-wide has-[:checked]:bg-[#1D1D1F] has-[:checked]:text-white has-[:checked]:border-[#1D1D1F] dark:has-[:checked]:bg-white dark:has-[:checked]:text-[#0D0D11] dark:has-[:checked]:border-white transition-colors duration-300">
+          <input type="radio" name="mon" class="hidden" checked>所有显示器
+        </label>
+        <label class="cursor-pointer rounded-full border-[0.5px] border-black/10 dark:border-white/15 px-4 py-1.5 text-[12px] tracking-wide has-[:checked]:bg-[#1D1D1F] has-[:checked]:text-white has-[:checked]:border-[#1D1D1F] dark:has-[:checked]:bg-white dark:has-[:checked]:text-[#0D0D11] dark:has-[:checked]:border-white transition-colors duration-300">
+          <input type="radio" name="mon" class="hidden">仅主屏
+        </label>
+        <label class="cursor-pointer rounded-full border-[0.5px] border-black/10 dark:border-white/15 px-4 py-1.5 text-[12px] tracking-wide has-[:checked]:bg-[#1D1D1F] has-[:checked]:text-white has-[:checked]:border-[#1D1D1F] dark:has-[:checked]:bg-white dark:has-[:checked]:text-[#0D0D11] dark:has-[:checked]:border-white transition-colors duration-300">
+          <input type="radio" name="mon" class="hidden">自选
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 快捷与启动 ================= -->
+  <section class="rounded-3xl bg-white dark:bg-[#1A1A1F] border-[0.5px] border-black/5 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] px-8 py-6 mb-6">
+    <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40 mb-5">Shortcuts · 快捷与启动</p>
+
+    <div class="flex items-center justify-between gap-8 py-2">
+      <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">暂停 / 恢复热键</span>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <select class="appearance-none rounded-lg border-[0.5px] border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.06] pl-3 pr-8 py-2 text-[13px] focus:outline-none transition-colors duration-300">
+            <option>Ctrl + Alt</option><option>Ctrl + Shift</option><option>Alt + Shift</option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-black/40 dark:text-white/40 pointer-events-none" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <kbd class="rounded-[6px] border-[0.5px] border-black/10 dark:border-white/15 bg-white dark:bg-white/10 px-2.5 py-1 text-[12px] font-mono shadow-[0_1px_2px_rgba(0,0,0,0.06)]">P</kbd>
+      </div>
+    </div>
+
+    <div class="divide-y divide-black/5 dark:divide-white/5 mt-2">
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/85">开机自动启动</span>
+        <label class="switch"><input type="checkbox"><span class="track"></span></label>
+      </div>
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/85">启用摄像头守护</span>
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 遮罩外观 ================= -->
+  <section class="rounded-3xl bg-white dark:bg-[#1A1A1F] border-[0.5px] border-black/5 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] px-8 py-6 mb-6">
+    <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40 mb-2">Mask · 遮罩外观</p>
+    <div class="divide-y divide-black/5 dark:divide-white/5">
+      <div class="flex items-center justify-between gap-8 py-4">
+        <span class="text-[13px] text-black/60 dark:text-white/60 flex-none">模糊强度</span>
+        <div class="flex items-center gap-5 flex-1 max-w-[400px]">
+          <input type="range" class="lux-slider flex-1 lux-sync" min="0" max="100" step="5" value="50">
+          <span class="font-mono text-[13px] w-11 text-right">50</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-8 py-4">
+        <div class="min-w-0">
+          <p class="text-[13px] text-black/85">识别侧脸样本</p>
+          <p class="text-[11px] leading-relaxed text-black/40 dark:text-white/40 mt-1">侧脸参与身份比对，配合注册的转头模板可减少侧脸误判</p>
+        </div>
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 隐私与数据（危险区） ================= -->
+  <section class="rounded-3xl bg-white dark:bg-[#1A1A1F] border-[0.5px] border-black/5 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] px-8 py-6 mb-8">
+    <p class="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40 dark:text-white/40 mb-5">Privacy · 隐私与数据</p>
+    <p class="text-[12px] leading-relaxed text-black/40 dark:text-white/40 max-w-[560px]">
+      所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储，仅保存在本机当前用户目录。
+    </p>
+    <button class="mt-5 rounded-xl border-[0.5px] border-[#C0453E]/30 px-5 py-2.5 text-[13px] font-medium tracking-wide text-[#C0453E]/90 hover:bg-[#C0453E]/5 transition-colors duration-300">
+      清除主人人脸数据
+    </button>
+  </section>
+
+</main>
+
+<!-- ================= 底部状态栏：磨砂玻璃 ================= -->
+<footer class="sticky bottom-0 backdrop-blur-xl bg-white/70 dark:bg-[#141418]/70 border-t border-black/5 dark:border-white/10">
+  <div class="max-w-[860px] mx-auto px-6 sm:px-8 py-3 flex items-center justify-between">
+    <span class="text-[11px] tracking-wide text-black/40 dark:text-white/40">PrivacyScreenGuard <span class="font-mono">v1.0.0</span></span>
+    <span class="text-[11px] tracking-wide text-black/40 dark:text-white/40">就绪 · 全部画面仅本地处理</span>
+  </div>
+</footer>
+
+<script>
+  // 主题切换（dark class 策略）
+  const btn = document.getElementById('themeBtn');
+  const icon = document.getElementById('themeIcon');
+  btn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    icon.textContent = document.documentElement.classList.contains('dark') ? '☾' : '☀︎';
+    paintSliders();
+  });
+
+  // 滑块已选轨道填充 + 数值联动（等宽字体，数字跳动无位移）
+  function paintSlider(el) {
+    const p = (el.value - el.min) / (el.max - el.min) * 100;
+    const dark = document.documentElement.classList.contains('dark');
+    const fill = dark ? '#F5F5F7' : '#1D1D1F';
+    const rest = dark ? '#3A3A40' : '#E5E5E5';
+    el.style.background = `linear-gradient(to right, ${fill} ${p}%, ${rest} ${p}%)`;
+    el.closest('div').querySelector('.font-mono').textContent = el.value;
+  }
+  function paintSliders() { document.querySelectorAll('.lux-sync').forEach(paintSlider); }
+  document.querySelectorAll('.lux-sync').forEach(el => el.addEventListener('input', () => paintSlider(el)));
+  paintSliders();
+</script>
+</body>
+</html>

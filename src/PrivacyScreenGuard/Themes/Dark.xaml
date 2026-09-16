@@ -12,6 +12,7 @@
     <SolidColorBrush x:Key="Bg.Input" Color="#FF232329"/>    <!-- 输入框：石墨上的填充 -->
     <SolidColorBrush x:Key="Bg.Hover" Color="#14FFFFFF"/>    <!-- 悬停：白 8% 轻微提亮 -->
     <SolidColorBrush x:Key="Bg.Pressed" Color="#24FFFFFF"/>  <!-- 按下：白 14% -->
+    <SolidColorBrush x:Key="Switch.Off" Color="#33FFFFFF"/>  <!-- 开关关态：白 20% -->
 
     <!-- 文字：暗色 label 体系 -->
     <SolidColorBrush x:Key="Fg.Primary" Color="#FFF5F5F7"/>

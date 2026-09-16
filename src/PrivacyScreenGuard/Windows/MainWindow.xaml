@@ -4,8 +4,8 @@
         Title="摄像头隐私屏"
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
-        Width="860" Height="720"
-        MinWidth="760" MinHeight="600"
+        Width="860" Height="820"
+        MinWidth="760" MinHeight="640"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen">
     <Grid>
@@ -15,230 +15,324 @@
             <RowDefinition Height="Auto"/> <!-- 底部状态栏 -->
         </Grid.RowDefinitions>
 
-        <!-- 标题区：应用图标 + 名称 + 副标题；右侧为主题切换 -->
-        <Grid Grid.Row="0" Margin="16,12,16,0">
+        <!-- 标题区：墨色徽标 + 名称 + Overline 英文小字；右侧主题切换 -->
+        <Grid Grid.Row="0" Margin="16,20,16,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Image Source="pack://application:,,,/Assets/icon_32.png" Width="26" Height="26"
-                       VerticalAlignment="Center"/>
-                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="摄像头隐私屏" FontSize="{StaticResource FontSize.Title}" FontWeight="SemiBold"/>
-                    <TextBlock Text="摄像头守护 · 本地识别 · 自动遮罩" FontSize="{StaticResource FontSize.Caption}"
-                               Foreground="{DynamicResource Fg.Secondary}" Margin="0,2,0,0"/>
+                <Border Width="40" Height="40" CornerRadius="12"
+                        Background="{DynamicResource Solid.Fill}">
+                    <Viewbox Width="20" Height="20">
+                        <Canvas Width="24" Height="24">
+                            <Path Data="M12,3 L5,6 L5,11 C5,15.5 8,19.5 12,21 C16,19.5 19,15.5 19,11 L19,6 L12,3 Z"
+                                  Stroke="{DynamicResource Solid.Foreground}" StrokeThickness="1.6"
+                                  StrokeLineJoin="Round" Fill="Transparent"/>
+                            <Ellipse Canvas.Left="9.6" Canvas.Top="8.6" Width="4.8" Height="4.8"
+                                     Fill="{DynamicResource Solid.Foreground}"/>
+                        </Canvas>
+                    </Viewbox>
+                </Border>
+                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="摄像头隐私屏" FontSize="17" FontWeight="SemiBold"/>
+                    <TextBlock Text="CAMERA PRIVACY GUARD" Style="{StaticResource Overline}" Margin="0,3,0,0"/>
                 </StackPanel>
             </StackPanel>
             <!-- 明暗主题切换（全局控件，固定在标题区右上） -->
-            <Button x:Name="BtnTheme" Width="40" Height="32" HorizontalAlignment="Right"
-                    VerticalAlignment="Center" Padding="0" FontSize="15"
-                    ToolTip="切换明亮 / 深色主题"/>
+            <Button x:Name="BtnTheme" Style="{StaticResource CircleButton}" HorizontalAlignment="Right"
+                    VerticalAlignment="Center" ToolTip="切换明亮 / 深色主题">
+                <TextBlock x:Name="TxtThemeIcon" Text="☀" FontSize="14"/>
+            </Button>
         </Grid>
 
         <!-- 主体：各分区（内容超高时可滚动） -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="16,0,16,0">
-            <StackPanel Margin="0,0,0,12">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="16,20,16,0">
+            <StackPanel Margin="0,0,0,24">
 
-                <!-- 1. 守护状态 -->
-                <GroupBox Header="守护状态" Style="{StaticResource Card}">
-                    <StackPanel Orientation="Horizontal">
-                        <!-- 状态点：柔和外发光 + 呼吸动画（3.2s 循环），颜色随状态由代码后置同步 -->
-                        <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="{DynamicResource StatusOK}"
-                                 VerticalAlignment="Center" Margin="0,0,8,0">
-                            <Ellipse.Effect>
-                                <DropShadowEffect x:Name="StatusGlow" BlurRadius="8" ShadowDepth="0" Opacity="0.8"
-                                                  Color="#34A853"/>
-                            </Ellipse.Effect>
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                                            <DoubleAnimation Storyboard.TargetName="StatusGlow" Storyboard.TargetProperty="Opacity"
-                                                             From="0.9" To="0.35" Duration="0:0:1.6">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <SineEase EasingMode="EaseInOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetName="StatusGlow" Storyboard.TargetProperty="BlurRadius"
-                                                             From="6" To="12" Duration="0:0:1.6">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <SineEase EasingMode="EaseInOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                        <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="SemiBold"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="{DynamicResource Fg.Secondary}"
-                                   Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
-                        <Button x:Name="BtnPauseResume" Content="暂停守护" Style="{StaticResource PrimaryButton}"
-                                MinWidth="100" Margin="24,0,0,0"/>
-                    </StackPanel>
-                </GroupBox>
-
-                <!-- 2. 检测参数 -->
-                <GroupBox Header="检测参数" Style="{StaticResource Card}">
+                <!-- ============ 1. 守护状态（Hero：全窗最重点） ============ -->
+                <GroupBox Header="GUARD STATUS · 守护状态" Style="{StaticResource Card}">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="110"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="40"/>
-                            <RowDefinition Height="40"/>
-                            <RowDefinition Height="40"/>
-                            <RowDefinition Height="40"/>
-                            <RowDefinition Height="40"/>
-                            <RowDefinition Height="40"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Text="识别阈值" VerticalAlignment="Center"/>
-                        <Slider x:Name="SldThreshold" Grid.Column="1" Minimum="0.3" Maximum="0.9" Style="{StaticResource MinimalSlider}"
-                                TickFrequency="0.05" IsSnapToTickEnabled="True"
-                                SmallChange="0.05" LargeChange="0.1" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtThresholdValue" Grid.Column="2" Text="0.55" FontFamily="Consolas"
-                                   HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
-
-                        <TextBlock Text="触发延迟" Grid.Row="1" VerticalAlignment="Center"/>
-                        <Slider x:Name="SldTriggerDelay" Grid.Row="1" Grid.Column="1" Minimum="300" Maximum="800"
-                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"
-                                Style="{StaticResource MinimalSlider}"/>
-                        <TextBlock x:Name="TxtTriggerDelayValue" Grid.Row="1" Grid.Column="2" Text="500 ms" FontFamily="Consolas"
-                                   HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
-
-                        <TextBlock Text="恢复延迟" Grid.Row="2" VerticalAlignment="Center"/>
-                        <Slider x:Name="SldRecoverDelay" Grid.Row="2" Grid.Column="1" Minimum="500" Maximum="1000"
-                                TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center"
-                                Style="{StaticResource MinimalSlider}"/>
-                        <TextBlock x:Name="TxtRecoverDelayValue" Grid.Row="2" Grid.Column="2" Text="800 ms" FontFamily="Consolas"
-                                   HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center"/>
-
-                        <TextBlock Text="检测帧率" Grid.Row="3" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="CmbFps" Grid.Row="3" Grid.Column="1" Width="140"
-                                  HorizontalAlignment="Left" VerticalAlignment="Center">
-                            <ComboBoxItem Content="5 帧/秒"/>
-                            <ComboBoxItem Content="6 帧/秒"/>
-                            <ComboBoxItem Content="8 帧/秒"/>
-                            <ComboBoxItem Content="10 帧/秒"/>
-                        </ComboBox>
-
-                        <TextBlock Text="无人策略" Grid.Row="4" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="CmbNoFacePolicy" Grid.Row="4" Grid.Column="1" Width="140"
-                                  HorizontalAlignment="Left" VerticalAlignment="Center">
-                            <ComboBoxItem Content="保持正常"/>
-                            <ComboBoxItem Content="触发锁定"/>
-                        </ComboBox>
-
-                        <TextBlock Text="多人在场" Grid.Row="5" VerticalAlignment="Center"
-                                   ToolTip="画面中同时出现主人和其他人时的处理方式"/>
-                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
-                            <ComboBox x:Name="CmbMultiPerson" Width="190" HorizontalAlignment="Left"
-                                      VerticalAlignment="Center">
-                                <ComboBoxItem Content="主人在场即放行"/>
-                                <ComboBoxItem Content="有陌生人即遮罩"/>
-                            </ComboBox>
-                            <TextBlock Text="给别人看屏幕时选放行" Margin="10,0,0,0"
-                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <!-- 状态点：柔和外发光 + 呼吸动画（3.2s 循环），颜色随状态由代码后置同步 -->
+                                <Ellipse x:Name="StatusLight" Width="12" Height="12" Fill="{DynamicResource StatusOK}"
+                                         VerticalAlignment="Center" Margin="0,0,14,0">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect x:Name="StatusGlow" BlurRadius="8" ShadowDepth="0" Opacity="0.8"
+                                                          Color="#34A853"/>
+                                    </Ellipse.Effect>
+                                    <Ellipse.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                    <DoubleAnimation Storyboard.TargetName="StatusGlow" Storyboard.TargetProperty="Opacity"
+                                                                     From="0.9" To="0.35" Duration="0:0:1.6">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <SineEase EasingMode="EaseInOut"/>
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                    <DoubleAnimation Storyboard.TargetName="StatusGlow" Storyboard.TargetProperty="BlurRadius"
+                                                                     From="6" To="12" Duration="0:0:1.6">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <SineEase EasingMode="EaseInOut"/>
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Ellipse.Triggers>
+                                </Ellipse>
+                                <TextBlock x:Name="StatusText" Text="正在初始化…" FontSize="26" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="CameraInUseText" Text="摄像头使用中" FontSize="12"
+                                       Foreground="{DynamicResource Fg.Tertiary}" Margin="26,12,0,0"
+                                       Visibility="Collapsed"/>
                         </StackPanel>
+                        <Button x:Name="BtnPauseResume" Content="暂停守护" Grid.Column="1"
+                                MinWidth="96" VerticalAlignment="Top"/>
                     </Grid>
                 </GroupBox>
 
-                <!-- 3. 设备选择 -->
-                <GroupBox Header="设备选择" Style="{StaticResource Card}">
+                <!-- ============ 2. 检测参数 ============ -->
+                <GroupBox Header="DETECTION · 检测参数" Style="{StaticResource Card}">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="摄像头" Width="110" VerticalAlignment="Center"/>
-                            <ComboBox x:Name="CmbCamera" Width="300" DisplayMemberPath="Display"
-                                      VerticalAlignment="Center"/>
-                            <Button x:Name="BtnRefreshCameras" Content="刷新" Width="60" Padding="4,2"
-                                    Margin="8,0,0,0"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="守护显示器" Width="110" VerticalAlignment="Center"/>
-                            <RadioButton x:Name="RbAllMonitors" Content="所有显示器" GroupName="MonitorMode"
-                                         IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0"/>
-                            <RadioButton x:Name="RbPrimaryMonitor" Content="仅主屏" GroupName="MonitorMode"
-                                         VerticalAlignment="Center" Margin="0,0,14,0"/>
-                            <RadioButton x:Name="RbSelectedMonitors" Content="自选" GroupName="MonitorMode"
-                                         VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ListBox x:Name="LstMonitors" Height="76" SelectionMode="Multiple" IsEnabled="False"
-                                 DisplayMemberPath="Display"/>
-                    </StackPanel>
-                </GroupBox>
+                        <!-- 行：标签左 · 滑块中 · 数值右，行间发丝分隔 -->
+                        <Grid Height="48">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="识别阈值" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <Slider x:Name="SldThreshold" Grid.Column="1" Minimum="0.3" Maximum="0.9" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                    SmallChange="0.05" LargeChange="0.1" VerticalAlignment="Center" Margin="24,0,20,0"/>
+                            <TextBlock x:Name="TxtThresholdValue" Grid.Column="2" Text="0.55" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
 
-                <!-- 4. 快捷与启动 -->
-                <GroupBox Header="快捷与启动" Style="{StaticResource Card}">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="暂停/恢复热键" Width="110" VerticalAlignment="Center"/>
-                            <ComboBox x:Name="CmbHotkeyMods" Width="110" VerticalAlignment="Center">
-                                <ComboBoxItem Content="Ctrl+Alt" IsSelected="True"/>
-                                <ComboBoxItem Content="Ctrl+Shift"/>
-                                <ComboBoxItem Content="Alt+Shift"/>
+                        <Grid Height="48">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="触发延迟" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <Slider x:Name="SldTriggerDelay" Grid.Column="1" Minimum="300" Maximum="800" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="24,0,20,0"/>
+                            <TextBlock x:Name="TxtTriggerDelayValue" Grid.Column="2" Text="500" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="48">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="恢复延迟" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <Slider x:Name="SldRecoverDelay" Grid.Column="1" Minimum="500" Maximum="1000" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="24,0,20,0"/>
+                            <TextBlock x:Name="TxtRecoverDelayValue" Grid.Column="2" Text="800" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="检测帧率" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <ComboBox x:Name="CmbFps" Grid.Column="1" Width="150" MinHeight="32" FontSize="13"
+                                      HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <ComboBoxItem Content="5 帧/秒"/>
+                                <ComboBoxItem Content="6 帧/秒"/>
+                                <ComboBoxItem Content="8 帧/秒"/>
+                                <ComboBoxItem Content="10 帧/秒"/>
                             </ComboBox>
-                            <TextBox x:Name="TxtHotkeyKey" Width="56" MaxLength="3" Text="P" MinHeight="32"
-                                     TextAlignment="Center" VerticalAlignment="Center"
-                                     VerticalContentAlignment="Center" Margin="8,0,0,0"
-                                     Style="{StaticResource MinimalTextBox}"
-                                     ToolTip="主键支持 A-Z、0-9 或 F1-F12"/>
-                            <TextBlock Text="主键支持 A-Z、0-9 或 F1-F12" Margin="10,0,0,0"
-                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <CheckBox x:Name="ChkAutostart" Content="开机自动启动" VerticalAlignment="Center"
-                                      Margin="0,0,28,0"/>
-                            <CheckBox x:Name="ChkCameraEnabled" Content="启用摄像头守护" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="无人策略" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <ComboBox x:Name="CmbNoFacePolicy" Grid.Column="1" Width="150" MinHeight="32" FontSize="13"
+                                      HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <ComboBoxItem Content="保持正常"/>
+                                <ComboBoxItem Content="触发锁定"/>
+                            </ComboBox>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="多人在场" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ComboBox x:Name="CmbMultiPerson" Width="170" MinHeight="32" FontSize="13"
+                                          VerticalAlignment="Center">
+                                    <ComboBoxItem Content="主人在场即放行"/>
+                                    <ComboBoxItem Content="有陌生人即遮罩"/>
+                                </ComboBox>
+                                <TextBlock Text="给别人看屏幕时选放行" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="16,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
                     </StackPanel>
                 </GroupBox>
 
-                <!-- 5. 遮罩外观 -->
-                <GroupBox Header="遮罩外观" Style="{StaticResource Card}">
+                <!-- ============ 3. 设备选择 ============ -->
+                <GroupBox Header="DEVICES · 设备选择" Style="{StaticResource Card}">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="模糊强度" Width="110" VerticalAlignment="Center"/>
-                            <Slider x:Name="SldBlur" Width="300" Minimum="0" Maximum="100" Value="50"
-                                    VerticalAlignment="Center" Style="{StaticResource MinimalSlider}"/>
-                            <TextBlock x:Name="TxtBlurValue" Text="50" MinWidth="44" Margin="10,0,0,0"
-                                       FontFamily="Consolas" VerticalAlignment="Center"/>
-                            <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" Margin="10,0,0,0"
-                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <CheckBox x:Name="ChkStrictPose" Content="识别侧脸样本" VerticalAlignment="Center"
-                                      ToolTip="开启后：侧脸/贴边脸也参与身份比对（配合注册的左/右转头模板，能认出侧脸的主人，同时拦截侧脸的陌生人）；&#x0a;关闭时：侧脸不参与判定（不触发遮罩，但侧身的陌生人也会被放过）"/>
-                            <TextBlock Text="建议先在注册向导完成左/右转头采集" Margin="10,0,0,0"
-                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="摄像头" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ComboBox x:Name="CmbCamera" Width="300" MinHeight="32" FontSize="13"
+                                          DisplayMemberPath="Display" VerticalAlignment="Center"/>
+                                <Button x:Name="BtnRefreshCameras" Content="刷新" MinWidth="64" Margin="16,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="守护显示器" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <RadioButton x:Name="RbAllMonitors" Content="所有显示器" GroupName="MonitorMode"
+                                             IsChecked="True" Style="{StaticResource PillRadio}"/>
+                                <RadioButton x:Name="RbPrimaryMonitor" Content="仅主屏" GroupName="MonitorMode"
+                                             Style="{StaticResource PillRadio}" Margin="8,0,0,0"/>
+                                <RadioButton x:Name="RbSelectedMonitors" Content="自选" GroupName="MonitorMode"
+                                             Style="{StaticResource PillRadio}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <ListBox x:Name="LstMonitors" Height="72" SelectionMode="Multiple" IsEnabled="False"
+                                 DisplayMemberPath="Display" Margin="0,4,0,0"/>
                     </StackPanel>
                 </GroupBox>
 
-                <!-- 6. 隐私与数据（危险区：与配置区额外拉开 24 间隔） -->
-                <GroupBox Header="隐私与数据" Style="{StaticResource Card}" Margin="0,12,0,8">
+                <!-- ============ 4. 快捷与启动 ============ -->
+                <GroupBox Header="SHORTCUTS · 快捷与启动" Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储。"
-                                   Foreground="{DynamicResource Fg.Secondary}" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                        <Button x:Name="BtnClearTemplate" Content="清除主人人脸数据" Width="140" Padding="6,4"
-                                HorizontalAlignment="Left" Cursor="Hand"
-                                BorderBrush="{DynamicResource Danger}" Foreground="{DynamicResource Danger}"/>
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="暂停 / 恢复热键" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ComboBox x:Name="CmbHotkeyMods" Width="120" MinHeight="32" FontSize="13"
+                                          VerticalAlignment="Center">
+                                    <ComboBoxItem Content="Ctrl + Alt" IsSelected="True"/>
+                                    <ComboBoxItem Content="Ctrl + Shift"/>
+                                    <ComboBoxItem Content="Alt + Shift"/>
+                                </ComboBox>
+                                <TextBox x:Name="TxtHotkeyKey" Width="48" MaxLength="3" Text="P" MinHeight="32"
+                                         TextAlignment="Center" VerticalAlignment="Center"
+                                         VerticalContentAlignment="Center" Margin="12,0,0,0"
+                                         Style="{StaticResource MinimalTextBox}"
+                                         ToolTip="主键支持 A-Z、0-9 或 F1-F12"/>
+                                <TextBlock Text="主键支持 A-Z、0-9 或 F1-F12" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="16,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <TextBlock Text="开机自动启动" VerticalAlignment="Center" FontSize="13"/>
+                            <ToggleButton x:Name="ChkAutostart" Style="{StaticResource LuxSwitch}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <TextBlock Text="启用摄像头守护" VerticalAlignment="Center" FontSize="13"/>
+                            <ToggleButton x:Name="ChkCameraEnabled" Style="{StaticResource LuxSwitch}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- ============ 5. 遮罩外观 ============ -->
+                <GroupBox Header="MASK · 遮罩外观" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid Height="48">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="模糊强度" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <Slider x:Name="SldBlur" Grid.Column="1" Minimum="0" Maximum="100" Value="50"
+                                    Style="{StaticResource MinimalSlider}" VerticalAlignment="Center" Margin="24,0,20,0"/>
+                            <TextBlock x:Name="TxtBlurValue" Grid.Column="2" Text="50" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="56" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="识别侧脸样本" FontSize="13"/>
+                                <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ChkStrictPose" Style="{StaticResource LuxSwitch}" Grid.Column="1"
+                                          VerticalAlignment="Center" IsChecked="True"
+                                          ToolTip="开启后：侧脸/贴边脸也参与身份比对（配合注册的左/右转头模板，能认出侧脸的主人，同时拦截侧脸的陌生人）；&#x0a;关闭时：侧脸不参与判定（不触发遮罩，但侧身的陌生人也会被放过）"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- ============ 6. 隐私与数据（危险区） ============ -->
+                <GroupBox Header="PRIVACY · 隐私与数据" Style="{StaticResource Card}" Margin="0">
+                    <StackPanel>
+                        <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储，仅保存在本机当前用户目录。"
+                                   FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Fg.Tertiary}"
+                                   MaxWidth="560" HorizontalAlignment="Left"/>
+                        <Button x:Name="BtnClearTemplate" Content="清除主人人脸数据" MinWidth="140"
+                                HorizontalAlignment="Left" Margin="0,20,0,0"
+                                BorderBrush="#66C0453E" Foreground="#E5C0453E"/>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
         </ScrollViewer>
 
-        <!-- 底部状态栏：版本 + 最新提示消息 -->
-        <Border Grid.Row="2" Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0,1,0,0"
-                Padding="12,6">
+        <!-- 底部状态栏：磨砂玻璃（半透明卡底 + Mica），版本 + 最新提示消息 -->
+        <Border Grid.Row="2" Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0,0.5,0,0"
+                Padding="32,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="TxtVersion" Text="隐私屏" Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
-                <TextBlock x:Name="TxtStatusMessage" Grid.Column="1" Margin="20,0,0,0" Text="就绪"
-                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtVersion" Text="PrivacyScreenGuard" FontSize="11" FontFamily="Consolas"
+                           Foreground="{DynamicResource Fg.Tertiary}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtStatusMessage" Grid.Column="1" Margin="24,0,0,0" Text="就绪"
+                           FontSize="11" TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource Fg.Tertiary}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
     </Grid>

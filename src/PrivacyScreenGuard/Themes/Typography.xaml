@@ -19,92 +19,32 @@
     <sys:Double x:Key="FontSize.Body">14</sys:Double>
     <sys:Double x:Key="FontSize.Title">20</sys:Double>
 
-    <!-- 卡片容器：14px 大圆角 + 极细边框（8%）+ 软阴影（模拟浮起）+ 内边距 20 -->
+    <!-- 卡片容器：24px 大圆角 + 发丝边框（8%）+ 软阴影（模拟浮起）+ 慷慨内边距 -->
     <Style x:Key="Card" TargetType="GroupBox">
         <Setter Property="Background" Value="{DynamicResource Bg.Card}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Bg.Border}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="20"/>
-        <Setter Property="Margin" Value="0,0,0,16"/>
+        <Setter Property="Padding" Value="32,28"/>
+        <Setter Property="Margin" Value="0,0,0,24"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="GroupBox">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="14" Padding="{TemplateBinding Padding}">
+                            CornerRadius="24" Padding="{TemplateBinding Padding}">
                         <Border.Effect>
-                            <!-- 大扩散、低透明度的柔和阴影：0 4px 24px rgba(0,0,0,0.05) -->
-                            <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270"
-                                              Opacity="0.05" Color="#000000"/>
+                            <!-- 大扩散、低透明度的柔和阴影：0 8px 32px rgba(0,0,0,0.04) -->
+                            <DropShadowEffect BlurRadius="32" ShadowDepth="8" Direction="270"
+                                              Opacity="0.04" Color="#000000"/>
                         </Border.Effect>
                         <StackPanel>
-                            <!-- 分区标题：Body 14 SemiBold，与内容间距 10 -->
-                            <TextBlock Text="{TemplateBinding Header}"
-                                       FontSize="{StaticResource FontSize.Body}"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"/>
+                            <!-- 分区标题：Overline 微型标签（10px / 辅助透明度），与内容间距 16 -->
+                            <TextBlock Text="{TemplateBinding Header}" FontSize="10" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg.Tertiary}" Margin="0,0,0,16"/>
                             <ContentPresenter/>
                         </StackPanel>
                     </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- 主按钮（实心填充）：黑底白字（暗色反转），极简无阴影 -->
-    <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{DynamicResource Solid.Fill}"/>
-        <Setter Property="Foreground" Value="{DynamicResource Solid.Foreground}"/>
-        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}"/>
-        <Setter Property="Padding" Value="16,0"/>
-        <Setter Property="MinHeight" Value="32"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Grid>
-                        <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8"/>
-                        <!-- 悬停叠加层：只动透明度（主题安全），0.3s 缓动 -->
-                        <Border x:Name="hover" Background="{DynamicResource Bg.Hover}" CornerRadius="8" Opacity="0"/>
-                        <ContentPresenter Margin="{TemplateBinding Padding}"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                                          RecognizesAccessKey="True"/>
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="hover" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.3">
-                                            <DoubleAnimation.EasingFunction>
-                                                <CubicEase EasingMode="EaseOut"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="hover" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.3">
-                                            <DoubleAnimation.EasingFunction>
-                                                <CubicEase EasingMode="EaseOut"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bg" Property="Opacity" Value="0.85"/>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="bg" Property="Opacity" Value="0.35"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -251,6 +191,132 @@
                             </Track.Thumb>
                         </Track>
                     </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Overline 微型标签：10px 小字，辅助透明度（WPF 无字间距 API，加宽字距以空格手排） -->
+    <Style x:Key="Overline" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource Fg.Tertiary}"/>
+        <Setter Property="Margin" Value="0"/>
+    </Style>
+
+    <!-- 胶囊单选（显示器选择）：未选中 hairline 描边，选中墨色填充反转文字 -->
+    <Style x:Key="PillRadio" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource Fg.Secondary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Caption}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <Border x:Name="bg" Background="Transparent"
+                                BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0.5"
+                                CornerRadius="999" Padding="16,6"/>
+                        <Border x:Name="hover" Background="{DynamicResource Bg.Hover}"
+                                CornerRadius="999" Padding="16,6" Opacity="0"/>
+                        <ContentPresenter x:Name="content" Margin="16,6" HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.3"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource Solid.Fill}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Solid.Foreground}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 苹果式开关：44×26 胶囊 + 20px 白圆点，开启=墨色填充，0.3s 缓动位移 -->
+    <Style x:Key="LuxSwitch" TargetType="ToggleButton">
+        <Setter Property="Width" Value="44"/>
+        <Setter Property="Height" Value="26"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <!-- 关态轨道（灰）与开态轨道（墨色）叠加，切换只动透明度——主题安全 -->
+                        <Border x:Name="trackOff" Background="{DynamicResource Switch.Off}" CornerRadius="13"/>
+                        <Border x:Name="trackOn" Background="{DynamicResource Solid.Fill}" CornerRadius="13" Opacity="0"/>
+                        <Ellipse x:Name="knob" Width="20" Height="20" Fill="{DynamicResource Solid.Foreground}"
+                                 HorizontalAlignment="Left" Margin="3,0,0,0" VerticalAlignment="Center">
+                            <Ellipse.RenderTransform>
+                                <TranslateTransform x:Name="knobShift" X="0"/>
+                            </Ellipse.RenderTransform>
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270"
+                                                  Opacity="0.15" Color="#000000"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="knobShift" Storyboard.TargetProperty="X"
+                                                         To="18" Duration="0:0:0.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="trackOn" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="knobShift" Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="trackOn" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

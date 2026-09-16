@@ -174,7 +174,7 @@ public partial class MainWindow : Window
             ChkCameraEnabled.IsChecked = _settings.CameraEnabled;
 
             // 主题按钮图标：当前深色 → 显示 ☀️（点击切明亮）；当前明亮 → 显示 🌙（点击切深色）
-            BtnTheme.Content = _settings.Theme == "dark" ? "☀️" : "🌙";
+            TxtThemeIcon.Text = _settings.Theme == "dark" ? "☀" : "☾";
 
             // 版本号
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -439,7 +439,7 @@ public partial class MainWindow : Window
         string next = ThemeManager.Toggle();
         _settings.Theme = next;
         SettingsService.Save(_settings);
-        BtnTheme.Content = next == "dark" ? "☀️" : "🌙";
+        TxtThemeIcon.Text = next == "dark" ? "☀" : "☾";
         ShowMessage(next == "dark" ? "已切换到深色主题" : "已切换到明亮主题");
     }
 
