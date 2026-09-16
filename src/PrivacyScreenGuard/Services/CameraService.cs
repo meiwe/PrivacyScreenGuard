@@ -21,6 +21,15 @@ public sealed class CameraService : ICameraService
     /// <summary>保护 _capture / _cts / _loopTask 的锁。</summary>
     private readonly object _sync = new();
 
+    /// <summary>
+    /// 全局摄像头原生操作闸门（进程级）：OpenCV 的 DSHOW/MSMF 后端不允许跨线程并发执行
+    /// open / set / read / delete，而应用中存在多个并发源——向导预览、主窗口设备枚举
+    /// （EnumerateDevices 会逐个短暂开关设备）、引擎采集线程——同时操作同一物理设备
+    /// 会造成原生堆损坏并直接崩溃（AccessViolation / 0xc0000374）。
+    /// 因此所有 VideoCapture 的构造、属性设置、Read、Dispose 一律在本锁内串行执行。
+    /// </summary>
+    private static readonly object CvCaptureGate = new();
+
     private VideoCapture? _capture;
     private CancellationTokenSource? _cts;
     private Task? _loopTask;
@@ -122,7 +131,13 @@ public sealed class CameraService : ICameraService
             capture = _capture;
             _capture = null;
         }
-        capture?.Dispose();
+        if (capture is not null)
+        {
+            lock (CvCaptureGate)
+            {
+                capture.Dispose();
+            }
+        }
 
         _isRunning = false;
     }
@@ -189,8 +204,16 @@ public sealed class CameraService : ICameraService
                 consecutiveReadFailures = 0;
                 lock (_sync)
                 {
-                    _capture?.Dispose();
+                    VideoCapture? old = _capture;
                     _capture = opened;
+                    if (old is not null)
+                    {
+                        // 旧实例释放必须过全局闸门（与其他线程的 open/read 互斥）
+                        lock (CvCaptureGate)
+                        {
+                            old.Dispose();
+                        }
+                    }
                 }
                 capture = opened;
             }
@@ -201,8 +224,12 @@ public sealed class CameraService : ICameraService
             bool readOk;
             try
             {
-                // 阶段 1 结束后 capture 必然非 null（打开失败的分支已 continue）
-                readOk = capture!.Read(frame) && !frame.Empty();
+                // 阶段 1 结束后 capture 必然非 null（打开失败的分支已 continue）。
+                // Read 必须过全局闸门：与设备枚举（逐个开关设备）互斥，否则原生层堆损坏
+                lock (CvCaptureGate)
+                {
+                    readOk = capture!.Read(frame) && !frame.Empty();
+                }
             }
             catch (Exception)
             {
@@ -221,8 +248,15 @@ public sealed class CameraService : ICameraService
                     // 释放旧实例并回到阶段 1，重建 VideoCapture 触发重连
                     lock (_sync)
                     {
-                        _capture?.Dispose();
+                        VideoCapture? old = _capture;
                         _capture = null;
+                        if (old is not null)
+                        {
+                            lock (CvCaptureGate)
+                            {
+                                old.Dispose();
+                            }
+                        }
                     }
                 }
                 else
@@ -272,27 +306,31 @@ public sealed class CameraService : ICameraService
 
     /// <summary>
     /// 尝试打开指定索引的摄像头（DSHOW 后端）并设置分辨率；失败返回 null。
+    /// 打开与属性设置必须过全局闸门（与其他线程的 read/dispose/枚举互斥）。
     /// </summary>
     private static VideoCapture? TryOpenCapture(int deviceIndex)
     {
         VideoCapture? capture = null;
-        try
+        lock (CvCaptureGate)
         {
-            capture = new VideoCapture(deviceIndex, VideoCaptureAPIs.DSHOW);
-            if (!capture.IsOpened())
+            try
             {
-                capture.Dispose();
+                capture = new VideoCapture(deviceIndex, VideoCaptureAPIs.DSHOW);
+                if (!capture.IsOpened())
+                {
+                    capture.Dispose();
+                    return null;
+                }
+                capture.FrameWidth = CaptureWidth;
+                capture.FrameHeight = CaptureHeight;
+                return capture;
+            }
+            catch
+            {
+                // 驱动异常 / 设备瞬间不可用等，统一视为打开失败
+                capture?.Dispose();
                 return null;
             }
-            capture.FrameWidth = CaptureWidth;
-            capture.FrameHeight = CaptureHeight;
-            return capture;
-        }
-        catch
-        {
-            // 驱动异常 / 设备瞬间不可用等，统一视为打开失败
-            capture?.Dispose();
-            return null;
         }
     }
 
@@ -321,23 +359,28 @@ public sealed class CameraService : ICameraService
     /// </summary>
     public static List<(int Index, string Name)> EnumerateDevices()
     {
-        // 1. 探测索引 0~9：能打开即认为存在，探测后立即释放
+        // 1. 探测索引 0~9：能打开即认为存在，探测后立即释放。
+        //    整个探测过程必须过全局闸门：枚举会逐个短暂开关物理设备，
+        //    与采集线程的 open/read 并发会直接导致原生堆损坏崩溃
         var availableIndexes = new List<int>();
-        for (int i = 0; i < 10; i++)
+        lock (CvCaptureGate)
         {
-            VideoCapture? probe = null;
-            try
+            for (int i = 0; i < 10; i++)
             {
-                probe = new VideoCapture(i, VideoCaptureAPIs.DSHOW);
-                if (probe.IsOpened()) availableIndexes.Add(i);
-            }
-            catch
-            {
-                // 打不开 / 驱动异常都视为该索引无设备
-            }
-            finally
-            {
-                probe?.Dispose();
+                VideoCapture? probe = null;
+                try
+                {
+                    probe = new VideoCapture(i, VideoCaptureAPIs.DSHOW);
+                    if (probe.IsOpened()) availableIndexes.Add(i);
+                }
+                catch
+                {
+                    // 打不开 / 驱动异常都视为该索引无设备
+                }
+                finally
+                {
+                    probe?.Dispose();
+                }
             }
         }
 
