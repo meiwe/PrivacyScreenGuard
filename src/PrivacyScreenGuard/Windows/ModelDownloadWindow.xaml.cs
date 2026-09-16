@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using PrivacyScreenGuard.Services;
+using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 
 namespace PrivacyScreenGuard.Windows;
@@ -56,7 +57,7 @@ public partial class ModelDownloadWindow : Window
         BtnCancel.IsEnabled = true;
         BtnCancel.Content = "取消";
         DownloadProgress.Value = 0;
-        TxtDetail.Foreground = Brushes.DimGray;
+        TxtDetail.Foreground = (Brush)TryFindResource("Fg.Secondary") ?? Brushes.DimGray;
         TxtDetail.Text = "正在连接下载源…";
         TxtSpeed.Text = "";
 
@@ -109,7 +110,7 @@ public partial class ModelDownloadWindow : Window
     {
         _succeeded = true;
         DownloadProgress.Value = 100;
-        TxtDetail.Foreground = Brushes.SeaGreen;
+        TxtDetail.Foreground = (Brush)TryFindResource("StatusOK") ?? Brushes.SeaGreen;
         TxtDetail.Text = "模型已就绪";
         TxtSpeed.Text = "";
         DialogResult = true;
@@ -119,7 +120,7 @@ public partial class ModelDownloadWindow : Window
     /// <summary>下载失败：显示原因并给出重试入口（网络受限时可换镜像重试）。</summary>
     private void OnDownloadFailed(string message)
     {
-        TxtDetail.Foreground = Brushes.IndianRed;
+        TxtDetail.Foreground = (Brush)TryFindResource("Danger") ?? Brushes.IndianRed;
         TxtDetail.Text = "下载失败：" + message;
         TxtSpeed.Text = "请检查网络连接后点击“重试”（会自动尝试其他下载源）";
         BtnRetry.Visibility = Visibility.Visible;

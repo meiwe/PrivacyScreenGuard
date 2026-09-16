@@ -78,6 +78,11 @@ public sealed class AppSettings
     public double DarkThreshold { get; set; } = 18;
 
     /// <summary>
+    /// 界面主题（"light" / "dark"，默认 light）。由 ThemeManager 在启动与切换时应用。
+    /// </summary>
+    public string Theme { get; set; } = "light";
+
+    /// <summary>
     /// 把带范围约定的数值字段夹取到各自合法范围，保证设置始终可用。
     /// </summary>
     public void Sanitize()
@@ -88,5 +93,10 @@ public sealed class AppSettings
         CaptureFps = Math.Clamp(CaptureFps, 5, 10);
         BlurStrength = Math.Clamp(BlurStrength, 0, 100);
         DarkThreshold = Math.Clamp(DarkThreshold, 0, 255);
+        // 主题只允许两个合法值，非法值回退 light
+        if (Theme != "dark")
+        {
+            Theme = "light";
+        }
     }
 }

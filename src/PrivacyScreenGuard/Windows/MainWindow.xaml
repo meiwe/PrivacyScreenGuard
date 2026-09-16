@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="摄像头隐私屏"
         Icon="pack://application:,,,/Assets/icon.ico"
+        Background="{DynamicResource Bg.Window}"
         Width="860" Height="640"
         ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen">
@@ -18,16 +19,22 @@
 
                 <!-- 1. 守护状态 -->
                 <GroupBox Header="守护状态" Padding="10" Margin="0,0,0,10">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="#FF2ECC40"
-                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="Bold"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="#FF27AE60"
-                                   Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
-                        <Button x:Name="BtnPauseResume" Content="暂停守护" Width="100" Margin="24,0,0,0"
-                                Padding="6,3"/>
-                    </StackPanel>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="StatusLight" Width="14" Height="14" Fill="{DynamicResource StatusOK}"
+                                     VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="StatusText" Text="正在初始化…" FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CameraInUseText" Text="摄像头使用中 ●" Foreground="{DynamicResource StatusOK}"
+                                       Margin="20,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <Button x:Name="BtnPauseResume" Content="暂停守护" Width="100" Margin="24,0,0,0"
+                                    Padding="6,3"/>
+                        </StackPanel>
+                        <!-- 明暗主题切换（靠右） -->
+                        <Button x:Name="BtnTheme" Width="40" Height="28" HorizontalAlignment="Right"
+                                Padding="0" FontSize="15"
+                                ToolTip="切换明亮 / 深色主题"/>
+                    </Grid>
                 </GroupBox>
 
                 <!-- 2. 检测参数 -->
@@ -91,7 +98,7 @@
                                 <ComboBoxItem Content="有陌生人即遮罩"/>
                             </ComboBox>
                             <TextBlock Text="给别人看屏幕时选放行" Margin="10,0,0,0"
-                                       Foreground="Gray" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
                 </GroupBox>
@@ -135,7 +142,7 @@
                                      VerticalContentAlignment="Center" Margin="8,0,0,0"
                                      ToolTip="主键支持 A-Z、0-9 或 F1-F12"/>
                             <TextBlock Text="主键支持 A-Z、0-9 或 F1-F12" Margin="10,0,0,0"
-                                       Foreground="Gray" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <CheckBox x:Name="ChkAutostart" Content="开机自动启动" VerticalAlignment="Center"
@@ -155,13 +162,13 @@
                             <TextBlock x:Name="TxtBlurValue" Text="50" MinWidth="44" Margin="10,0,0,0"
                                        VerticalAlignment="Center"/>
                             <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" Margin="10,0,0,0"
-                                       Foreground="Gray" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <CheckBox x:Name="ChkStrictPose" Content="识别侧脸样本" VerticalAlignment="Center"
                                       ToolTip="开启后：侧脸/贴边脸也参与身份比对（配合注册的左/右转头模板，能认出侧脸的主人，同时拦截侧脸的陌生人）；&#x0a;关闭时：侧脸不参与判定（不触发遮罩，但侧身的陌生人也会被放过）"/>
                             <TextBlock Text="建议先在注册向导完成左/右转头采集" Margin="10,0,0,0"
-                                       Foreground="Gray" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
@@ -170,26 +177,26 @@
                 <GroupBox Header="隐私与数据" Padding="10" Margin="0,0,0,4">
                     <StackPanel>
                         <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储。"
-                                   Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                                   Foreground="{DynamicResource Fg.Secondary}" TextWrapping="Wrap" Margin="0,0,0,10"/>
                         <Button x:Name="BtnClearTemplate" Content="清除主人人脸数据" Width="140" Padding="6,4"
                                 HorizontalAlignment="Left" Cursor="Hand"
-                                BorderBrush="#FFC0392B" Foreground="#FFC0392B"/>
+                                BorderBrush="{DynamicResource Danger}" Foreground="{DynamicResource Danger}"/>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
         </ScrollViewer>
 
         <!-- 底部状态栏：版本 + 最新提示消息 -->
-        <Border Grid.Row="1" Background="#FFF0F0F0" BorderBrush="#FFDDDDDD" BorderThickness="0,1,0,0"
+        <Border Grid.Row="1" Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0,1,0,0"
                 Padding="12,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="TxtVersion" Text="隐私屏" Foreground="Gray" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtVersion" Text="隐私屏" Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="TxtStatusMessage" Grid.Column="1" Margin="20,0,0,0" Text="就绪"
-                           TextTrimming="CharacterEllipsis" Foreground="Gray" VerticalAlignment="Center"/>
+                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fg.Secondary}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
     </Grid>

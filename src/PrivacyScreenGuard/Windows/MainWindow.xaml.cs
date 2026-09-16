@@ -10,6 +10,7 @@ using PrivacyScreenGuard.Models;
 using PrivacyScreenGuard.Services;
 // WinForms 与 WPF 存在大量同名类型（Application/MessageBox/Brushes 等），显式消歧
 using Application = System.Windows.Application;
+using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
@@ -90,6 +91,7 @@ public partial class MainWindow : Window
         ChkCameraEnabled.Checked += OnCameraEnabledToggled;
         ChkCameraEnabled.Unchecked += OnCameraEnabledToggled;
         BtnClearTemplate.Click += OnClearTemplateClick;
+        BtnTheme.Click += OnThemeToggleClick;
     }
 
     // ==================== 初始化 ====================
@@ -171,6 +173,9 @@ public partial class MainWindow : Window
             ChkAutostart.IsChecked = _settings.Autostart;
             ChkCameraEnabled.IsChecked = _settings.CameraEnabled;
 
+            // 主题按钮图标：当前深色 → 显示 ☀️（点击切明亮）；当前明亮 → 显示 🌙（点击切深色）
+            BtnTheme.Content = _settings.Theme == "dark" ? "☀️" : "🌙";
+
             // 版本号
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
             TxtVersion.Text = $"隐私屏 v{version?.ToString(3) ?? "1.0"}";
@@ -221,6 +226,9 @@ public partial class MainWindow : Window
 
     // ==================== 引擎状态显示 ====================
 
+    /// <summary>按资源键取当前主题画刷（跟随明暗主题自动变化）。</summary>
+    private Brush ThemeBrush(string key) => (Brush)TryFindResource(key) ?? Brushes.Gray;
+
     private void OnEngineStatusChanged(string status)
     {
         // 引擎事件在后台线程触发 → 封送 UI 线程
@@ -231,7 +239,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.BeginInvoke(() =>
         {
-            StatusLight.Fill = Brushes.IndianRed; // 错误：指示灯变红
+            StatusLight.Fill = ThemeBrush("Danger"); // 错误：指示灯变红
             ShowMessage($"{DescribeError(error)}{message}", isError: true);
         });
     }
@@ -250,11 +258,11 @@ public partial class MainWindow : Window
         StatusText.Text = status;
         if (status.Contains("监控中") || status.Contains("遮罩"))
         {
-            StatusLight.Fill = Brushes.LimeGreen; // 运行中（含遮罩触发/解除，均属正常守护）
+            StatusLight.Fill = ThemeBrush("StatusOK"); // 运行中（含遮罩触发/解除，均属正常守护）
         }
         else if (status.Contains("已暂停") || status.Contains("守护已停止"))
         {
-            StatusLight.Fill = Brushes.Gold; // 暂停 / 停止
+            StatusLight.Fill = ThemeBrush("StatusWarn"); // 暂停 / 停止
         }
         UpdateEngineUi();
     }
@@ -281,7 +289,7 @@ public partial class MainWindow : Window
     private void ShowMessage(string message, bool isError = false)
     {
         TxtStatusMessage.Text = message;
-        TxtStatusMessage.Foreground = isError ? Brushes.IndianRed : Brushes.DimGray;
+        TxtStatusMessage.Foreground = ThemeBrush(isError ? "Danger" : "Fg.Secondary");
     }
 
     // ==================== 暂停 / 恢复 ====================
@@ -412,6 +420,19 @@ public partial class MainWindow : Window
         ShowMessage(_settings.MultiPersonPolicy == MultiPersonPolicy.StrangerTriggersMask
             ? "多人在场：有陌生人即遮罩（即使你也在画面里）"
             : "多人在场：主人在场即放行（给别人看屏幕不用暂停守护）");
+    }
+
+    /// <summary>
+    /// 明暗主题切换：整体替换画刷字典（DynamicResource 自动刷新全部窗口控件），
+    /// 持久化到设置并更新按钮图标。
+    /// </summary>
+    private void OnThemeToggleClick(object sender, RoutedEventArgs e)
+    {
+        string next = ThemeManager.Toggle();
+        _settings.Theme = next;
+        SettingsService.Save(_settings);
+        BtnTheme.Content = next == "dark" ? "☀️" : "🌙";
+        ShowMessage(next == "dark" ? "已切换到深色主题" : "已切换到明亮主题");
     }
 
     /// <summary>保存设置并让引擎按新参数重建状态机（帧率变化时引擎内部会自动重启采集）。</summary>

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="摄像头隐私屏 - 首次引导"
         Icon="pack://application:,,,/Assets/icon.ico"
+        Background="{DynamicResource Bg.Window}"
         Width="760" Height="590"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
@@ -23,12 +24,14 @@
         <TextBlock Grid.Row="0" Text="注册主人面孔" FontSize="20" FontWeight="Bold"/>
 
         <!-- 2. 说明文字 -->
-        <TextBlock Grid.Row="1" Margin="0,3,0,6" FontSize="12" TextWrapping="Wrap" Foreground="#FF606060"
+        <TextBlock Grid.Row="1" Margin="0,3,0,6" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource Fg.Secondary}"
                    Text="分三步采集：正脸 → 左转头 → 右转头。多姿态特征能显著减少侧脸误判。画面仅在本地处理，不会保存、上传任何图像；最终仅保存加密后的人脸特征。"/>
 
         <!-- 3. 当前阶段提示（醒目） -->
-        <Border Grid.Row="2" Background="#FFEAF2FB" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
-            <TextBlock x:Name="StageText" FontSize="15" FontWeight="Bold" Foreground="#FF1E3A5F"
+        <Border Grid.Row="2" Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Accent}"
+                BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,6">
+            <TextBlock x:Name="StageText" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Accent}"
                        Text="步骤 1/3：请正对镜头，保持自然表情"/>
         </Border>
 
@@ -72,8 +75,8 @@
                   Content="自动采集（检测到符合当前步骤姿态的单人时每 0.9 秒自动采集，默认开启）"/>
 
         <!-- 9. 底部状态栏：错误 / 提示信息 -->
-        <Border Grid.Row="8" Margin="0,8,0,0" Background="#FFF4F4F4" CornerRadius="3" Padding="8,4">
-            <TextBlock x:Name="StatusText" FontSize="12" TextWrapping="Wrap" Foreground="DimGray"
+        <Border Grid.Row="8" Margin="0,8,0,0" Background="{DynamicResource Bg.Card}" CornerRadius="3" Padding="8,4">
+            <TextBlock x:Name="StatusText" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Fg.Secondary}"
                        Text="正在初始化…"/>
         </Border>
     </Grid>

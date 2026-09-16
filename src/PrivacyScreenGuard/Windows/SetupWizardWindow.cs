@@ -15,6 +15,7 @@ using PrivacyScreenGuard.Models;
 using PrivacyScreenGuard.Services;
 // OpenCvSharp.Window 与 WPF Window 同名，显式消歧
 using Window = System.Windows.Window;
+using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 // WinForms 与 WPF 的 MessageBox 系列同名，向导确认弹窗使用 WPF 版本
 using MessageBox = System.Windows.MessageBox;
@@ -668,7 +669,7 @@ public partial class SetupWizardWindow : Window
         void Apply()
         {
             StatusText.Text = message;
-            StatusText.Foreground = isError ? Brushes.IndianRed : Brushes.DimGray;
+            StatusText.Foreground = (Brush)TryFindResource(isError ? "Danger" : "Fg.Secondary") ?? Brushes.DimGray;
         }
 
         if (Dispatcher.CheckAccess())

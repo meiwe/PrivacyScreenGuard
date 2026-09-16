@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="摄像头隐私屏 - 准备模型"
         Icon="pack://application:,,,/Assets/icon.ico"
+        Background="{DynamicResource Bg.Window}"
         Width="580" Height="330"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
@@ -19,19 +20,19 @@
         <TextBlock Grid.Row="0" Text="正在准备人脸模型" FontSize="19" FontWeight="Bold"/>
 
         <!-- 2. 说明：交代做什么、为什么要联网 -->
-        <TextBlock Grid.Row="1" Margin="0,8,0,0" FontSize="13" TextWrapping="Wrap" Foreground="#FF404040"
+        <TextBlock Grid.Row="1" Margin="0,8,0,0" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource Fg.Secondary}"
                    Text="首次运行需要下载人脸检测与识别模型（来自 OpenCV Zoo，合计约 37 MB）。这是本软件唯一一次联网，下载完成后所有画面都在本地处理，不再有任何网络请求。"/>
 
         <!-- 3. 来源与许可证提示 -->
-        <TextBlock Grid.Row="2" Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="Gray"
+        <TextBlock Grid.Row="2" Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Fg.Secondary}"
                    Text="来源：github.com/opencv/opencv_zoo　许可证：Apache-2.0（可商用）"/>
 
         <!-- 4. 进度区 -->
         <StackPanel Grid.Row="3" VerticalAlignment="Center" Margin="0,14,0,0">
             <ProgressBar x:Name="DownloadProgress" Height="18" Minimum="0" Maximum="100" Value="0"/>
-            <TextBlock x:Name="TxtDetail" Margin="0,8,0,0" FontSize="12" Foreground="#FF404040"
+            <TextBlock x:Name="TxtDetail" Margin="0,8,0,0" FontSize="12" Foreground="{DynamicResource Fg.Secondary}"
                        Text="正在连接下载源…"/>
-            <TextBlock x:Name="TxtSpeed" Margin="0,4,0,0" FontSize="12" Foreground="Gray" Text=""/>
+            <TextBlock x:Name="TxtSpeed" Margin="0,4,0,0" FontSize="12" Foreground="{DynamicResource Fg.Secondary}" Text=""/>
         </StackPanel>
 
         <!-- 5. 按钮行 -->

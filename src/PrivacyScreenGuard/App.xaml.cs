@@ -68,8 +68,9 @@ public partial class App : Application
 
         base.OnStartup(e);
 
-        // 2. 加载设置
+        // 2. 加载设置并应用界面主题（必须在创建任何窗口之前，避免闪白）
         Settings = SettingsService.Load();
+        ThemeManager.Apply(Settings.Theme);
 
         // 3. 模型就绪检查：缺失时询问用户是否下载（这是本软件唯一的联网行为）
         if (!ModelDownloadService.AllModelsPresent())
