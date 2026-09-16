@@ -120,6 +120,8 @@ public partial class App : Application
             {
                 // 显示遮罩（模糊强度取自设置；>0 时先截屏高斯模糊，失败回退纯黑）
                 Masks.ShowAll(Settings.BlurStrength);
+                // 触发遮罩时弹气泡提醒（直接基于 action 判断，不依赖状态文本匹配）
+                _tray?.ShowBubble("隐私保护中", "屏幕已暂时隐藏", ToolTipIcon.Info);
             }
             else if (action == MaskAction.Hide)
             {
@@ -237,7 +239,7 @@ public partial class App : Application
 
     // ==================== 引擎事件 → 托盘 ====================
 
-    /// <summary>按状态文本同步托盘图标；"触发遮罩"这一关键状态弹气泡。</summary>
+    /// <summary>按状态文本同步托盘图标（触发遮罩的气泡已改由 MaskAction 事件直接弹出）。</summary>
     private void OnEngineStatusForTray(string status)
     {
         if (_tray is null)
@@ -248,11 +250,6 @@ public partial class App : Application
         if (status.Contains("监控中") || status.Contains("遮罩"))
         {
             _tray.SetStatus(TrayStatus.Running);
-            if (status.Contains("触发"))
-            {
-                // 关键状态：触发遮罩时提醒用户
-                _tray.ShowBubble("检测到他人", "内容已隐藏", ToolTipIcon.Info);
-            }
         }
         else if (status.Contains("已暂停") || status.Contains("守护已停止"))
         {

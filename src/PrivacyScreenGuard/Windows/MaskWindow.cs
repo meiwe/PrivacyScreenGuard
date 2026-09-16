@@ -119,7 +119,7 @@ public sealed class MaskWindow : Window
 
         var mainTip = new TextBlock
         {
-            Text = "检测到他人，内容已隐藏",
+            Text = "隐私保护中，屏幕已暂时隐藏",
             FontSize = 42,
             FontWeight = FontWeights.Bold,
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -128,7 +128,7 @@ public sealed class MaskWindow : Window
 
         var subTip = new TextBlock
         {
-            Text = "屏幕守护中，主人回到镜头前将自动恢复",
+            Text = "主人回到镜头前，画面会自动恢复",
             FontSize = 18,
             Foreground = new SolidColorBrush(Color.FromRgb(0xD5, 0xD9, 0xDD)), // 浅灰
             HorizontalAlignment = HorizontalAlignment.Center,

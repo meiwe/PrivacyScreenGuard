@@ -353,16 +353,16 @@ public sealed class GuardEngine : IDisposable
         if (action != MaskAction.None && _disposedFlag == 0)
         {
             MaskActionRequested?.Invoke(action);
-            RaiseStatus(action == MaskAction.Show ? "检测到陌生人，已触发隐私遮罩" : "主人已回归，解除隐私遮罩",
+            RaiseStatus(action == MaskAction.Show ? "检测到身边有人，已开启隐私遮罩" : "主人已回归，即将解除遮罩",
                 force: true);
         }
 
         // 5. 常规状态文本（500ms 节流）
         RaiseStatus(observation switch
         {
-            FrameObservation.NoFace => "监控中：未检测到人脸",
-            FrameObservation.OwnerPresent => $"监控中：{faceCount} 张人脸，最高相似度 {bestSim:F2}",
-            _ => $"监控中：{faceCount} 张人脸，未匹配到主人（最高相似度 {bestSim:F2}）"
+            FrameObservation.NoFace => "监控中：画面里暂时没有人",
+            FrameObservation.OwnerPresent => $"监控中：主人在画面里（相似度 {bestSim:F2}）",
+            _ => $"监控中：发现 {faceCount} 张面孔，均未匹配到主人（相似度 {bestSim:F2}）"
         });
     }
 
