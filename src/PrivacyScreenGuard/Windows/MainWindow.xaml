@@ -158,9 +158,9 @@
                                        Foreground="Gray" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox x:Name="ChkStrictPose" Content="严格模式：侧脸也触发遮罩" VerticalAlignment="Center"
-                                      ToolTip="开启后：任何正脸或侧脸入镜且未匹配到主人都会遮罩（适合要防止旁人侧身偷看）；&#x0a;关闭时：只有正脸才触发，主人扭头看侧屏不会误触发"/>
-                            <TextBlock Text="给别人看屏幕时可保持开启；扭头看侧屏请关闭" Margin="10,0,0,0"
+                            <CheckBox x:Name="ChkStrictPose" Content="识别侧脸样本" VerticalAlignment="Center"
+                                      ToolTip="开启后：侧脸/贴边脸也参与身份比对（配合注册的左/右转头模板，能认出侧脸的主人，同时拦截侧脸的陌生人）；&#x0a;关闭时：侧脸不参与判定（不触发遮罩，但侧身的陌生人也会被放过）"/>
+                            <TextBlock Text="建议先在注册向导完成左/右转头采集" Margin="10,0,0,0"
                                        Foreground="Gray" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>

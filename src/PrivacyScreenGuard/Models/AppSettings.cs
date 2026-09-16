@@ -68,9 +68,9 @@ public sealed class AppSettings
     public int BlurStrength { get; set; } = 50;
 
     /// <summary>
-    /// 侧脸是否也参与陌生人判定（默认 false = 侧脸不判定，扭头看侧屏不触发遮罩）。
-    /// 设为 true 后，检测到任何人脸（含侧脸）且未匹配到主人就触发遮罩——
-    /// 适合"严格模式"，但主人扭头看侧屏时会被误判。
+    /// 侧脸样本是否参与身份比对（默认 false = 侧脸不判定，扭头看侧屏不触发遮罩）。
+    /// 设为 true 后，侧脸/贴边脸也做比对：配合注册的左/右转头模板能认出侧脸的主人，
+    /// 同时拦截侧脸的陌生人；未注册侧脸模板时主人侧脸可能被误判。
     /// </summary>
     public bool StrictPoseMode { get; set; } = false;
 

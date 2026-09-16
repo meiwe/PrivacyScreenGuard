@@ -352,8 +352,8 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 严格模式开关：开启后侧脸/贴边脸也参与陌生人判定（给旁人看屏幕时保持拦截）；
-    /// 关闭时只有正脸才触发（扭头看侧屏不误报）。写回设置并立即生效。
+    /// "识别侧脸样本"开关：开启后侧脸/贴边脸也参与身份比对——配合注册的左/右转头模板，
+    /// 能认出侧脸的主人，同时拦截侧脸的陌生人；关闭时侧脸不参与判定（防护空档）。
     /// </summary>
     private void OnStrictPoseToggled(object sender, RoutedEventArgs e)
     {
@@ -364,8 +364,8 @@ public partial class MainWindow : Window
         _settings.StrictPoseMode = ChkStrictPose.IsChecked == true;
         SaveAndConfigure();
         ShowMessage(_settings.StrictPoseMode
-            ? "严格模式已开启：侧脸入镜也会遮罩（主人扭头看侧屏请先暂停守护或关闭此项）"
-            : "宽松模式已开启：只有正脸才触发遮罩，扭头看侧屏不会误报");
+            ? "已开启侧脸识别：侧脸也会与多姿态模板比对（建议已完成左/右转头采集）"
+            : "已关闭侧脸识别：侧脸不参与判定（扭头看侧屏不触发，但侧身陌生人也会被放过）");
     }
 
     private void OnFpsChanged(object sender, SelectionChangedEventArgs e)
