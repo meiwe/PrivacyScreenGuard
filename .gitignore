@@ -6,3 +6,7 @@ publish/
 .trae/
 models/*.onnx
 *.bin.tmp
+# 本机专用的 git 辅助脚本（含代理/凭据链路配置），不入库
+tools/git_first_commit.py
+tools/git_commit_push.py
+tools/publish_to_github.py
