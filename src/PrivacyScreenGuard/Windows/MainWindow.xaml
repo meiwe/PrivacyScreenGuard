@@ -32,7 +32,7 @@
                     </Viewbox>
                 </Border>
                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="摄像头隐私屏" FontSize="17" FontWeight="SemiBold"/>
+                    <TextBlock Text="摄像头隐私屏" FontSize="18" FontWeight="SemiBold"/>
                     <TextBlock Text="CAMERA PRIVACY GUARD" Style="{StaticResource Overline}" Margin="0,3,0,0"/>
                 </StackPanel>
             </StackPanel>
@@ -48,7 +48,7 @@
             <StackPanel Margin="0,0,0,24">
 
                 <!-- ============ 1. 守护状态（Hero：全窗最重点） ============ -->
-                <GroupBox Header="GUARD STATUS · 守护状态" Style="{StaticResource Card}">
+                <GroupBox Header="守护状态" Style="{StaticResource Card}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -97,7 +97,7 @@
                 </GroupBox>
 
                 <!-- ============ 2. 检测参数 ============ -->
-                <GroupBox Header="DETECTION · 检测参数" Style="{StaticResource Card}">
+                <GroupBox Header="检测参数" Style="{StaticResource Card}">
                     <StackPanel>
                         <!-- 行：标签左 · 滑块中 · 数值右，行间发丝分隔 -->
                         <Grid Height="48">
@@ -106,7 +106,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="44"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="识别阈值" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="识别阈值" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <Slider x:Name="SldThreshold" Grid.Column="1" Minimum="0.3" Maximum="0.9" Style="{StaticResource MinimalSlider}"
                                     TickFrequency="0.05" IsSnapToTickEnabled="True"
                                     SmallChange="0.05" LargeChange="0.1" VerticalAlignment="Center" Margin="24,0,20,0"/>
@@ -121,7 +121,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="44"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="触发延迟" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="触发延迟" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <Slider x:Name="SldTriggerDelay" Grid.Column="1" Minimum="300" Maximum="800" Style="{StaticResource MinimalSlider}"
                                     TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="24,0,20,0"/>
                             <TextBlock x:Name="TxtTriggerDelayValue" Grid.Column="2" Text="500" FontFamily="Consolas"
@@ -135,7 +135,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="44"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="恢复延迟" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="恢复延迟" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <Slider x:Name="SldRecoverDelay" Grid.Column="1" Minimum="500" Maximum="1000" Style="{StaticResource MinimalSlider}"
                                     TickFrequency="50" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="24,0,20,0"/>
                             <TextBlock x:Name="TxtRecoverDelayValue" Grid.Column="2" Text="800" FontFamily="Consolas"
@@ -148,7 +148,7 @@
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="检测帧率" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="检测帧率" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <ComboBox x:Name="CmbFps" Grid.Column="1" Width="150" MinHeight="32" FontSize="13"
                                       HorizontalAlignment="Left" VerticalAlignment="Center">
                                 <ComboBoxItem Content="5 帧/秒"/>
@@ -164,7 +164,7 @@
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="无人策略" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="无人策略" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <ComboBox x:Name="CmbNoFacePolicy" Grid.Column="1" Width="150" MinHeight="32" FontSize="13"
                                       HorizontalAlignment="Left" VerticalAlignment="Center">
                                 <ComboBoxItem Content="保持正常"/>
@@ -178,7 +178,7 @@
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="多人在场" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="多人在场" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ComboBox x:Name="CmbMultiPerson" Width="170" MinHeight="32" FontSize="13"
                                           VerticalAlignment="Center">
@@ -194,14 +194,14 @@
                 </GroupBox>
 
                 <!-- ============ 3. 设备选择 ============ -->
-                <GroupBox Header="DEVICES · 设备选择" Style="{StaticResource Card}">
+                <GroupBox Header="设备选择" Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Height="52">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="摄像头" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="摄像头" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ComboBox x:Name="CmbCamera" Width="300" MinHeight="32" FontSize="13"
                                           DisplayMemberPath="Display" VerticalAlignment="Center"/>
@@ -215,7 +215,7 @@
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="守护显示器" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="守护显示器" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <RadioButton x:Name="RbAllMonitors" Content="所有显示器" GroupName="MonitorMode"
                                              IsChecked="True" Style="{StaticResource PillRadio}"/>
@@ -231,14 +231,14 @@
                 </GroupBox>
 
                 <!-- ============ 4. 快捷与启动 ============ -->
-                <GroupBox Header="SHORTCUTS · 快捷与启动" Style="{StaticResource Card}">
+                <GroupBox Header="快捷与启动" Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Height="52">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="暂停 / 恢复热键" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="暂停 / 恢复热键" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ComboBox x:Name="CmbHotkeyMods" Width="120" MinHeight="32" FontSize="13"
                                           VerticalAlignment="Center">
@@ -274,7 +274,7 @@
                 </GroupBox>
 
                 <!-- ============ 5. 遮罩外观 ============ -->
-                <GroupBox Header="MASK · 遮罩外观" Style="{StaticResource Card}">
+                <GroupBox Header="遮罩外观" Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Height="48">
                             <Grid.ColumnDefinitions>
@@ -282,7 +282,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="44"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="模糊强度" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Secondary}"/>
+                            <TextBlock Text="模糊强度" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
                             <Slider x:Name="SldBlur" Grid.Column="1" Minimum="0" Maximum="100" Value="50"
                                     Style="{StaticResource MinimalSlider}" VerticalAlignment="Center" Margin="24,0,20,0"/>
                             <TextBlock x:Name="TxtBlurValue" Grid.Column="2" Text="50" FontFamily="Consolas"
@@ -308,7 +308,7 @@
                 </GroupBox>
 
                 <!-- ============ 6. 健康提醒 ============ -->
-                <GroupBox Header="HEALTH · 健康提醒" Style="{StaticResource Card}">
+                <GroupBox Header="健康提醒" Style="{StaticResource Card}">
                     <StackPanel>
                         <!-- 行：标签（标题+说明）· 滑块 · 数值 · 开关，行间发丝分隔 -->
                         <Grid MinHeight="56">
@@ -319,7 +319,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="久坐提醒" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="久坐提醒" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
                                 <TextBlock Text="连续在场分钟数" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
@@ -342,7 +342,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="用眼距离" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="用眼距离" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
                                 <TextBlock Text="脸宽占比阈值" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
@@ -365,7 +365,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="低头坐姿" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="低头坐姿" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
                                 <TextBlock Text="低头比例阈值" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
@@ -388,7 +388,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="喝水提醒" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="喝水提醒" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
                                 <TextBlock Text="间隔分钟数" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
@@ -411,7 +411,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="放松提醒" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="放松提醒" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
                                 <TextBlock Text="间隔分钟数" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
@@ -433,7 +433,7 @@
                 </GroupBox>
 
                 <!-- ============ 7. 隐私与数据（危险区） ============ -->
-                <GroupBox Header="PRIVACY · 隐私与数据" Style="{StaticResource Card}" Margin="0">
+                <GroupBox Header="隐私与数据" Style="{StaticResource Card}" Margin="0">
                     <StackPanel>
                         <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储，仅保存在本机当前用户目录。"
                                    FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Fg.Tertiary}"

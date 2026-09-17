@@ -39,9 +39,9 @@
                                               Opacity="0.04" Color="#000000"/>
                         </Border.Effect>
                         <StackPanel>
-                            <!-- 分区标题：Overline 微型标签（10px / 次级灰），与内容间距 16 -->
-                            <TextBlock Text="{TemplateBinding Header}" FontSize="10" FontWeight="Medium"
-                                       Foreground="{DynamicResource Fg.Secondary}" Margin="0,0,0,16"/>
+                            <!-- 分区标题：14px SemiBold 主色黑——标题必须比正文重，杜绝层级倒挂 -->
+                            <TextBlock Text="{TemplateBinding Header}" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg.Primary}" Margin="0,0,0,16"/>
                             <ContentPresenter/>
                         </StackPanel>
                     </Border>
@@ -243,11 +243,11 @@
         </Setter>
     </Style>
 
-    <!-- Overline 微型标签：10px 小字，次级灰（标题类统一用 Fg.Secondary，与行标签同级） -->
+    <!-- Overline 装饰小字：10px 浅灰，仅用于品牌辅助线等非内容场景 -->
     <Style x:Key="Overline" TargetType="TextBlock">
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="{DynamicResource Fg.Secondary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Fg.Tertiary}"/>
         <Setter Property="Margin" Value="0"/>
     </Style>
 
