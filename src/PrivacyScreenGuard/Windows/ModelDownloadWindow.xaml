@@ -4,6 +4,7 @@
         Title="摄像头隐私屏 - 准备模型"
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
+        Foreground="{DynamicResource Fg.Primary}"
         Width="580" Height="330"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">

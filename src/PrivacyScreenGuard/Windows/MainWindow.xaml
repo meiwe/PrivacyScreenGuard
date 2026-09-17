@@ -4,6 +4,7 @@
         Title="摄像头隐私屏"
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
+        Foreground="{DynamicResource Fg.Primary}"
         Width="860" Height="820"
         MinWidth="760" MinHeight="640"
         ResizeMode="CanResize"

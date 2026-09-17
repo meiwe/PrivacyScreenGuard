@@ -4,6 +4,7 @@
         Title="摄像头隐私屏 - 首次引导"
         Icon="pack://application:,,,/Assets/icon.ico"
         Background="{DynamicResource Bg.Window}"
+        Foreground="{DynamicResource Fg.Primary}"
         Width="760" Height="590"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">

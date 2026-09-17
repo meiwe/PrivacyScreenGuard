@@ -78,8 +78,10 @@
         <Setter Property="FontSize" Value="14"/>
     </Style>
 
-    <!-- 统一主文本色：覆盖 WPF-UI 的默认近黑，全站正文统一为深空灰 #1D1D1F -->
-    <Style TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource Fg.Primary}"/>
-    </Style>
+    <!--
+        注意：此处不要加隐式 TextBlock 样式！
+        隐式样式的优先级高于属性值继承，一旦设置 Foreground 会劫持所有模板内文字
+        （胶囊选中态白字、危险按钮红字全部变黑字黑底不可见）。
+        全站主文本色统一由各窗口根元素的 Foreground（Fg.Primary）向下继承实现。
+    -->
 </ResourceDictionary>
