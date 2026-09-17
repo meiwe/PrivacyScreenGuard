@@ -208,6 +208,8 @@
     <Style x:Key="PillRadio" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource Fg.Secondary}"/>
         <Setter Property="FontSize" Value="{StaticResource FontSize.Caption}"/>
+        <!-- 去掉默认焦点虚线框（与极简风格冲突；桌面以鼠标操作为主） -->
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -215,11 +217,14 @@
                     <Grid>
                         <Border x:Name="bg" Background="Transparent"
                                 BorderBrush="{DynamicResource Bg.Border}" BorderThickness="0.5"
-                                CornerRadius="999"/>
+                                CornerRadius="16"/>
                         <Border x:Name="hover" Background="{DynamicResource Bg.Hover}"
-                                CornerRadius="999" Opacity="0"/>
+                                CornerRadius="16" Opacity="0"/>
+                        <!-- 文字颜色显式绑定控件 Foreground：防止被隐式 TextBlock 样式（主色黑）劫持，
+                             否则选中态白字会变黑字、黑底上不可见 -->
                         <ContentPresenter x:Name="content" Margin="16,6" HorizontalAlignment="Center"
-                                          VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                          VerticalAlignment="Center" RecognizesAccessKey="True"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
