@@ -8,3 +8,5 @@ models/*.onnx
 *.bin.tmp
 # 开发辅助脚本不入库（模型下载已内置到程序内，图标生成脚本仅本地使用）
 tools/
+# GitHub Actions 工作流仅本地保留：当前令牌无 workflow scope 无法推送（启用 CI 时需网页添加或更新令牌）
+.github/
