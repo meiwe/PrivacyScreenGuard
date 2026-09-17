@@ -39,9 +39,9 @@
                                               Opacity="0.04" Color="#000000"/>
                         </Border.Effect>
                         <StackPanel>
-                            <!-- 分区标题：Overline 微型标签（10px / 辅助透明度），与内容间距 16 -->
+                            <!-- 分区标题：Overline 微型标签（10px / 次级灰），与内容间距 16 -->
                             <TextBlock Text="{TemplateBinding Header}" FontSize="10" FontWeight="Medium"
-                                       Foreground="{DynamicResource Fg.Tertiary}" Margin="0,0,0,16"/>
+                                       Foreground="{DynamicResource Fg.Secondary}" Margin="0,0,0,16"/>
                             <ContentPresenter/>
                         </StackPanel>
                     </Border>
@@ -196,11 +196,11 @@
         </Setter>
     </Style>
 
-    <!-- Overline 微型标签：10px 小字，辅助透明度（WPF 无字间距 API，加宽字距以空格手排） -->
+    <!-- Overline 微型标签：10px 小字，次级灰（标题类统一用 Fg.Secondary，与行标签同级） -->
     <Style x:Key="Overline" TargetType="TextBlock">
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="{DynamicResource Fg.Tertiary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Fg.Secondary}"/>
         <Setter Property="Margin" Value="0"/>
     </Style>
 
