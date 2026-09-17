@@ -771,9 +771,12 @@ public partial class MainWindow : Window
 
     // ==================== 健康提醒 ====================
 
+    /// <summary>健康设置保存防抖：拖动滑块期间 ValueChanged 连续触发，停手 400ms 后才真正落盘。</summary>
+    private DispatcherTimer? _healthSaveDebounce;
+
     /// <summary>
-    /// 健康提醒任一控件变更：从控件读回全部值写入设置 → 保存 → 热更新健康状态机
-    /// （无需重启，<see cref="HealthMonitor.UpdateSettings"/> 会按新值清零已关闭功能的计时）。
+    /// 健康提醒任一控件变更：先做轻量 UI 反馈（数值文本联动、滑块可用性），
+    /// 再经 400ms 防抖写入设置并热更新健康状态机（避免拖动过程中每帧写盘、刷屏提示）。
     /// </summary>
     private void OnHealthSettingChanged(object sender, RoutedEventArgs e)
     {
@@ -782,29 +785,46 @@ public partial class MainWindow : Window
             return;
         }
 
-        bool sedentary = ChkSedentary.IsChecked == true;
-        bool near = ChkNear.IsChecked == true;
-        bool slouch = ChkSlouch.IsChecked == true;
-        bool water = ChkWater.IsChecked == true;
-        bool breakOn = ChkBreak.IsChecked == true;
+        // 1. 数值实时联动（等宽字体保证拖动时数字无位移）
+        TxtSedentary.Text = SldSedentary.Value.ToString("0");
+        TxtNear.Text = SldNear.Value.ToString("0.00");
+        TxtSlouch.Text = SldSlouch.Value.ToString("0.00");
+        TxtWater.Text = SldWater.Value.ToString("0");
+        TxtBreak.Text = SldBreak.Value.ToString("0");
 
-        _settings.Health.SedentaryEnabled = sedentary;
+        // 2. 开关关闭时对应滑块禁用（视觉与逻辑一致）
+        SldSedentary.IsEnabled = ChkSedentary.IsChecked == true;
+        SldNear.IsEnabled = ChkNear.IsChecked == true;
+        SldSlouch.IsEnabled = ChkSlouch.IsChecked == true;
+        SldWater.IsEnabled = ChkWater.IsChecked == true;
+        SldBreak.IsEnabled = ChkBreak.IsChecked == true;
+
+        // 3. 防抖保存：最后一次变更 400ms 后执行
+        if (_healthSaveDebounce is null)
+        {
+            _healthSaveDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _healthSaveDebounce.Tick += SaveHealthSettingsNow;
+        }
+        _healthSaveDebounce.Stop();
+        _healthSaveDebounce.Start();
+    }
+
+    /// <summary>防抖到期：从控件读回全部值写入设置 → 保存 → 热更新健康状态机
+    /// （<see cref="HealthMonitor.UpdateSettings"/> 会按新值清零已关闭功能的计时）。</summary>
+    private void SaveHealthSettingsNow(object? sender, EventArgs e)
+    {
+        _healthSaveDebounce?.Stop();
+
+        _settings.Health.SedentaryEnabled = ChkSedentary.IsChecked == true;
         _settings.Health.SedentaryThresholdMinutes = (int)SldSedentary.Value;
-        _settings.Health.NearEnabled = near;
+        _settings.Health.NearEnabled = ChkNear.IsChecked == true;
         _settings.Health.NearThreshold = SldNear.Value;
-        _settings.Health.SlouchEnabled = slouch;
+        _settings.Health.SlouchEnabled = ChkSlouch.IsChecked == true;
         _settings.Health.SlouchThreshold = SldSlouch.Value;
-        _settings.Health.WaterEnabled = water;
+        _settings.Health.WaterEnabled = ChkWater.IsChecked == true;
         _settings.Health.WaterIntervalMinutes = (int)SldWater.Value;
-        _settings.Health.BreakEnabled = breakOn;
+        _settings.Health.BreakEnabled = ChkBreak.IsChecked == true;
         _settings.Health.BreakIntervalMinutes = (int)SldBreak.Value;
-
-        // 开关关闭时对应滑块禁用（视觉与逻辑一致）
-        SldSedentary.IsEnabled = sedentary;
-        SldNear.IsEnabled = near;
-        SldSlouch.IsEnabled = slouch;
-        SldWater.IsEnabled = water;
-        SldBreak.IsEnabled = breakOn;
 
         SettingsService.Save(_settings);
         App.Health?.UpdateSettings(_settings.Health);
