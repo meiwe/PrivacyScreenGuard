@@ -67,6 +67,7 @@ public partial class App : Application
     private HotkeyService? _hotkeys;
     private MainWindow? _mainWindow;
     private DispatcherTimer? _healthTimer;
+    private HealthToastWindow? _healthToast;
 
     /// <summary>是否处于强制退出流程（为 true 时主窗口 Closing 不再拦截）。</summary>
     public bool ForceExit => _forceExit;
@@ -186,17 +187,18 @@ public partial class App : Application
         Health = new HealthMonitor(Settings.Health);
         // 帧样本入口：OnSample 内部自带锁，后台采集线程直接调用安全，无需封送
         engine.HealthSampleReady += sample => Health.OnSample(sample);
-        // 提醒触发（后台线程）→ 封送 UI 线程：托盘气泡 + 主窗口消息栏
+        // 提醒触发（后台线程）→ 封送 UI 线程：自绘横幅 + 托盘气泡 + 主窗口消息栏
         Health.ReminderTriggered += (kind, message) => Dispatcher.BeginInvoke(() =>
         {
-            string title = kind switch
+            var (icon, title) = kind switch
             {
-                HealthReminderKind.Sedentary => "久坐提醒",
-                HealthReminderKind.NearDistance => "用眼距离提醒",
-                HealthReminderKind.Slouch => "坐姿提醒",
-                HealthReminderKind.Water => "喝水提醒",
-                _ => "放松提醒"
+                HealthReminderKind.Sedentary => ("💺", "久坐提醒"),
+                HealthReminderKind.NearDistance => ("👀", "用眼距离提醒"),
+                HealthReminderKind.Slouch => ("🧍", "坐姿提醒"),
+                HealthReminderKind.Water => ("💧", "喝水提醒"),
+                _ => ("🌿", "放松提醒")
             };
+            _healthToast?.ShowNotice(icon, title, message);
             _tray?.ShowBubble(title, message, ToolTipIcon.Info);
             _mainWindow?.ShowHealthNotice(message);
         });
@@ -205,6 +207,9 @@ public partial class App : Application
         _healthTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
         _healthTimer.Tick += (_, _) => Health.OnTimerTick(DateTime.UtcNow);
         _healthTimer.Start();
+
+        // 自绘轻量横幅（第三提醒通道）：不依赖系统通知设置，点击穿透不抢焦点
+        _healthToast = new HealthToastWindow();
 
         // 10. 托盘（向导流程与主窗口流程都需要，先创建）
         _tray = new TrayIconService();
@@ -258,8 +263,9 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // 释放顺序：健康定时器停走 → 热键退订 → 引擎（停采集、补发 Hide、释放推理服务）→ 遮罩窗口 → 托盘 → 热键 → 互斥体
+        // 释放顺序：健康定时器停走 → 热键退订 → 引擎（停采集、补发 Hide、释放推理服务）→ 遮罩窗口 → 横幅 → 托盘 → 热键 → 互斥体
         _healthTimer?.Stop();
+        _healthToast?.Close();
         HotkeyService.HotkeyPressed -= OnHotkeyPressed;
         Engine?.Dispose();
         Masks?.Dispose();
