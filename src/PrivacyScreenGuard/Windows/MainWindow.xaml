@@ -297,12 +297,39 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="识别侧脸样本" FontSize="13"/>
-                                <TextBlock Text="遮罩激活时截屏高斯模糊；0 = 纯黑遮罩" FontSize="11"
+                                <TextBlock Text="侧脸参与身份比对，配合注册的转头模板减少误判" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,4,0,0"/>
                             </StackPanel>
                             <ToggleButton x:Name="ChkStrictPose" Style="{StaticResource LuxSwitch}" Grid.Column="1"
                                           VerticalAlignment="Center" IsChecked="True"
                                           ToolTip="开启后：侧脸/贴边脸也参与身份比对（配合注册的左/右转头模板，能认出侧脸的主人，同时拦截侧脸的陌生人）；&#x0a;关闭时：侧脸不参与判定（不触发遮罩，但侧身的陌生人也会被放过）"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="52" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="遮罩主文案" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtMaskTitle" Grid.Column="1" Width="440" MinHeight="32"
+                                     HorizontalAlignment="Left" VerticalAlignment="Center"
+                                     MaxLength="60" Style="{StaticResource MinimalTextBox}"
+                                     ToolTip="遮罩中央显示的主提示文字，留空恢复默认，最长 60 字"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="遮罩副文案" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtMaskSubtitle" Grid.Column="1" Width="440" MinHeight="32"
+                                     HorizontalAlignment="Left" VerticalAlignment="Center"
+                                     MaxLength="60" Style="{StaticResource MinimalTextBox}"
+                                     ToolTip="主文案下方的小字，留空恢复默认，最长 60 字"/>
                         </Grid>
                     </StackPanel>
                 </GroupBox>

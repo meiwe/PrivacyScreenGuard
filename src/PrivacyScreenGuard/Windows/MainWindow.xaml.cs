@@ -113,6 +113,9 @@ public partial class MainWindow : Window
         BtnCheckUpdates.Click += OnCheckUpdatesClick;
         ChkCheckUpdates.Checked += OnCheckUpdatesToggled;
         ChkCheckUpdates.Unchecked += OnCheckUpdatesToggled;
+        // 遮罩自定义文案
+        TxtMaskTitle.TextChanged += OnMaskTextChanged;
+        TxtMaskSubtitle.TextChanged += OnMaskTextChanged;
         BtnClearTemplate.Click += OnClearTemplateClick;
         BtnTheme.Click += OnThemeToggleClick;
     }
@@ -231,6 +234,10 @@ public partial class MainWindow : Window
             // 更新检查
             TxtAppVersion.Text = $"v{UpdateCheckService.CurrentVersion.ToString(3)}";
             ChkCheckUpdates.IsChecked = _settings.CheckUpdatesOnStartup;
+
+            // 遮罩文案（自定义）
+            TxtMaskTitle.Text = _settings.MaskTitle;
+            TxtMaskSubtitle.Text = _settings.MaskSubtitle;
 
             // 主题按钮图标：当前深色 → 显示 ☀️（点击切明亮）；当前明亮 → 显示 🌙（点击切深色）
             TxtThemeIcon.Text = _settings.Theme == "dark" ? "☀" : "☾";
@@ -854,6 +861,42 @@ public partial class MainWindow : Window
     public void ShowHealthNotice(string message)
     {
         ShowMessage(message);
+    }
+
+    // ==================== 遮罩自定义文案 ====================
+
+    /// <summary>遮罩文案保存防抖：输入过程中 TextChanged 连续触发，停顿 400ms 后才落盘。</summary>
+    private DispatcherTimer? _maskTextDebounce;
+
+    /// <summary>遮罩文案输入变更：立即热更新遮罩窗口（无需等保存），400ms 防抖后持久化。</summary>
+    private void OnMaskTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_suppressEvents)
+        {
+            return;
+        }
+
+        // 立即对已创建的遮罩窗口生效（遮罩隐藏时也无妨，下次显示即为新文案）
+        App.Masks?.UpdateMaskTexts(TxtMaskTitle.Text, TxtMaskSubtitle.Text);
+
+        if (_maskTextDebounce is null)
+        {
+            _maskTextDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _maskTextDebounce.Tick += SaveMaskTextsNow;
+        }
+        _maskTextDebounce.Stop();
+        _maskTextDebounce.Start();
+    }
+
+    /// <summary>防抖到期：写入设置（Sanitize 负责空白回退默认与超长截断）并持久化。</summary>
+    private void SaveMaskTextsNow(object? sender, EventArgs e)
+    {
+        _maskTextDebounce?.Stop();
+
+        _settings.MaskTitle = TxtMaskTitle.Text;
+        _settings.MaskSubtitle = TxtMaskSubtitle.Text;
+        SettingsService.Save(_settings);
+        ShowMessage("遮罩文案已更新");
     }
 
     // ==================== 更新检查 ====================

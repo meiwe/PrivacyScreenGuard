@@ -30,6 +30,12 @@ public sealed class MaskWindowManager : IDisposable
     /// <summary>MonitorMode=Selected 时生效的目标屏索引集合（Index 与 ListDisplays 一致）。</summary>
     private readonly HashSet<int> _selected = new();
 
+    /// <summary>遮罩主文案（用户可自定义；空白时 MaskWindow 内部回退默认）。</summary>
+    private string _maskTitle = "隐私保护中，屏幕已暂时隐藏";
+
+    /// <summary>遮罩副文案。</summary>
+    private string _maskSubtitle = "主人回到镜头前，画面会自动恢复";
+
     /// <summary>构造线程的 Dispatcher；SystemEvents 事件从系统线程触发，需封送回 UI 线程。</summary>
     private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
@@ -113,6 +119,7 @@ public sealed class MaskWindowManager : IDisposable
             if (win == null)
             {
                 win = new MaskWindow(screen.DeviceName, GetDpiScale(screen));
+                win.UpdateTexts(_maskTitle, _maskSubtitle); // 新建窗口立即应用当前自定义文案
                 _windows.Add(win);
             }
 
@@ -168,6 +175,21 @@ public sealed class MaskWindowManager : IDisposable
     public void HandleDisplayChanged()
     {
         RebuildAll();
+    }
+
+    /// <summary>
+    /// 热更新遮罩文案：保存最新值并对全部已创建的遮罩窗口立即生效。
+    /// 必须在 WPF UI 线程调用（与其他遮罩公共方法一致）。
+    /// </summary>
+    public void UpdateMaskTexts(string title, string subtitle)
+    {
+        ThrowIfDisposed();
+        _maskTitle = title;
+        _maskSubtitle = subtitle;
+        foreach (MaskWindow w in _windows)
+        {
+            w.UpdateTexts(_maskTitle, _maskSubtitle);
+        }
     }
 
     /// <summary>

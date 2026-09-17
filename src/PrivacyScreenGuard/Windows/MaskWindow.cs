@@ -42,6 +42,12 @@ public sealed class MaskWindow : Window
     /// <summary>模糊背景图层（显示该屏快照的高斯模糊结果，铺满全屏）。</summary>
     private Image? _blurryImage;
 
+    /// <summary>遮罩主文案（大字）。</summary>
+    private TextBlock _mainTip = new();
+
+    /// <summary>遮罩副文案（小字）。</summary>
+    private TextBlock _subTip = new();
+
     /// <summary>
     /// 构造遮罩窗口（初始隐藏在屏幕外，等待 ShowFor 定位并显示）。
     /// </summary>
@@ -117,23 +123,19 @@ public sealed class MaskWindow : Window
             HorizontalAlignment = HorizontalAlignment.Center,
         };
 
-        var mainTip = new TextBlock
-        {
-            Text = "隐私保护中，屏幕已暂时隐藏",
-            FontSize = 42,
-            FontWeight = FontWeights.Bold,
-            Foreground = Brushes.White, // 黑底白字
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Margin = new Thickness(0, 20, 0, 14),
-        };
+        var mainTip = _mainTip;
+        mainTip.Text = "隐私保护中，屏幕已暂时隐藏";
+        mainTip.FontSize = 42;
+        mainTip.FontWeight = FontWeights.Bold;
+        mainTip.Foreground = Brushes.White; // 黑底白字
+        mainTip.HorizontalAlignment = HorizontalAlignment.Center;
+        mainTip.Margin = new Thickness(0, 20, 0, 14);
 
-        var subTip = new TextBlock
-        {
-            Text = "主人回到镜头前，画面会自动恢复",
-            FontSize = 18,
-            Foreground = new SolidColorBrush(Color.FromArgb(0xB3, 0xFF, 0xFF, 0xFF)), // 70% 白
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
+        var subTip = _subTip;
+        subTip.Text = "主人回到镜头前，画面会自动恢复";
+        subTip.FontSize = 18;
+        subTip.Foreground = new SolidColorBrush(Color.FromArgb(0xB3, 0xFF, 0xFF, 0xFF)); // 70% 白
+        subTip.HorizontalAlignment = HorizontalAlignment.Center;
 
         panel.Children.Add(icon);
         panel.Children.Add(mainTip);
@@ -190,6 +192,20 @@ public sealed class MaskWindow : Window
         // 且尽早释放引用让 GC 回收位图内存（隐私考虑：快照不留存）
         _blurryImage!.Source = null;
         Hide();
+    }
+
+    /// <summary>
+    /// 热更新遮罩文案（主文案 + 副文案；空白值回退默认）。
+    /// 用户在设置中自定义文案后由管理器调用，立即对已创建的遮罩生效。
+    /// </summary>
+    public void UpdateTexts(string? title, string? subtitle)
+    {
+        _mainTip.Text = string.IsNullOrWhiteSpace(title)
+            ? "隐私保护中，屏幕已暂时隐藏"
+            : title;
+        _subTip.Text = string.IsNullOrWhiteSpace(subtitle)
+            ? "主人回到镜头前，画面会自动恢复"
+            : subtitle;
     }
 
     /// <summary>

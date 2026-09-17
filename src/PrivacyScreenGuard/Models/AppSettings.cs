@@ -88,6 +88,18 @@ public sealed class AppSettings
     /// <summary>健康提醒设置（久坐/用眼距离/低头坐姿/喝水/放松，默认全部关闭）。</summary>
     public HealthSettings Health { get; set; } = new();
 
+    /// <summary>遮罩主文案默认值。</summary>
+    public const string MaskTitleDefault = "隐私保护中，屏幕已暂时隐藏";
+
+    /// <summary>遮罩副文案默认值。</summary>
+    public const string MaskSubtitleDefault = "主人回到镜头前，画面会自动恢复";
+
+    /// <summary>遮罩主文案（遮罩中央大字，可自定义，最长 60 字符）。</summary>
+    public string MaskTitle { get; set; } = MaskTitleDefault;
+
+    /// <summary>遮罩副文案（主文案下方的小字，可自定义，最长 60 字符）。</summary>
+    public string MaskSubtitle { get; set; } = MaskSubtitleDefault;
+
     /// <summary>
     /// 把带范围约定的数值字段夹取到各自合法范围，保证设置始终可用。
     /// </summary>
@@ -105,8 +117,23 @@ public sealed class AppSettings
             Theme = "light";
         }
 
+        // 遮罩文案：空白回退默认、超长截断
+        MaskTitle = NormalizeMaskText(MaskTitle, MaskTitleDefault);
+        MaskSubtitle = NormalizeMaskText(MaskSubtitle, MaskSubtitleDefault);
+
         // 健康设置子对象的数值字段统一夹取（JSON 显式 null 时保持 null，由持久化层兜底）
         Health?.Sanitize();
+    }
+
+    /// <summary>遮罩文案规范化：去首尾空白、空白回退默认、超 60 字符截断。</summary>
+    private static string NormalizeMaskText(string? text, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return fallback;
+        }
+        text = text.Trim();
+        return text.Length > 60 ? text[..60] : text;
     }
 }
 

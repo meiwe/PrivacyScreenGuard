@@ -156,6 +156,7 @@ public partial class App : Application
 
         // 6. 遮罩窗口管理器（必须在 UI 线程创建）
         Masks = new MaskWindowManager(Settings.MonitorMode, Settings.SelectedMonitors);
+        Masks.UpdateMaskTexts(Settings.MaskTitle, Settings.MaskSubtitle); // 应用自定义遮罩文案
 
         // 7. 遮罩动作事件（后台线程）→ UI 线程显示/隐藏遮罩（订阅方需幂等处理）
         engine.MaskActionRequested += action => Dispatcher.BeginInvoke(() =>
