@@ -17,7 +17,7 @@ using PrivacyScreenGuard.Native;
 namespace PrivacyScreenGuard.Windows;
 
 /// <summary>
-/// 单个显示器上的隐私遮罩窗口：模糊背景（屏幕快照高斯模糊）+ 压暗层 + 提示文字。
+/// 单个显示器上的隐私遮罩窗口：模糊背景（屏幕快照高斯模糊）+ 压暗层 + 深色胶囊（黑底白字提示）。
 /// 特性：点击穿透、不抢焦点、不出现在任务栏与 Alt+Tab、始终置顶。
 /// 模糊背景由管理器在遮罩显示【前】捕获（避免拍到遮罩自身），失败时自动回退为半透明纯黑。
 /// 界面由纯 C# 构建（不使用 XAML）。
@@ -87,26 +87,26 @@ public sealed class MaskWindow : Window
             VerticalAlignment = VerticalAlignment.Stretch,
         };
 
-        // 压暗层：在模糊图上再叠一层约 35% 的黑，进一步确保不可读并提高文字对比
+        // 压暗层：在模糊图上再叠一层约 35% 的黑，进一步确保不可读
         var dimOverlay = new Border
         {
             Background = new SolidColorBrush(Color.FromArgb(0x59, 0x00, 0x00, 0x00)),
         };
 
-        // 文字整体加轻微阴影，保证在任意底层画面上都有足够可读性
-        var shadow = new DropShadowEffect
+        // 文字容器：深色实底胶囊（黑底），保证白字在任何模糊背景上对比恒定可读
+        var capsule = new Border
         {
-            Color = Colors.Black,
-            BlurRadius = 10,
-            ShadowDepth = 3,
-            Opacity = 0.7,
+            Background = new SolidColorBrush(Color.FromArgb(0xD9, 0x10, 0x10, 0x14)), // 约 85% 深黑
+            CornerRadius = new CornerRadius(28),
+            Padding = new Thickness(56, 40, 56, 40),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
         var panel = new StackPanel
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Effect = shadow,
         };
 
         var icon = new TextBlock
@@ -122,6 +122,7 @@ public sealed class MaskWindow : Window
             Text = "隐私保护中，屏幕已暂时隐藏",
             FontSize = 42,
             FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White, // 黑底白字
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 20, 0, 14),
         };
@@ -130,18 +131,19 @@ public sealed class MaskWindow : Window
         {
             Text = "主人回到镜头前，画面会自动恢复",
             FontSize = 18,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xD5, 0xD9, 0xDD)), // 浅灰
+            Foreground = new SolidColorBrush(Color.FromArgb(0xB3, 0xFF, 0xFF, 0xFF)), // 70% 白
             HorizontalAlignment = HorizontalAlignment.Center,
         };
 
         panel.Children.Add(icon);
         panel.Children.Add(mainTip);
         panel.Children.Add(subTip);
+        capsule.Child = panel;
 
         var root = new Grid();
         root.Children.Add(_blurryImage);
         root.Children.Add(dimOverlay);
-        root.Children.Add(panel);
+        root.Children.Add(capsule);
         Content = root;
     }
 
