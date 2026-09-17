@@ -51,6 +51,9 @@ public partial class App : Application
     /// <summary>遮罩窗口管理器（在 UI 线程创建）。</summary>
     public static MaskWindowManager? Masks { get; private set; }
 
+    /// <summary>健康提醒状态机（在 UI 线程创建，独立于引擎生命周期：引擎 Stop/Start/Restart 不影响其计时）。</summary>
+    public static HealthMonitor? Health { get; private set; }
+
     /// <summary>主人模板重新注册成功后触发（主窗口据此刷新状态显示）。</summary>
     public static event Action? EngineRestarted;
 
@@ -63,6 +66,7 @@ public partial class App : Application
     private TrayIconService? _tray;
     private HotkeyService? _hotkeys;
     private MainWindow? _mainWindow;
+    private DispatcherTimer? _healthTimer;
 
     /// <summary>是否处于强制退出流程（为 true 时主窗口 Closing 不再拦截）。</summary>
     public bool ForceExit => _forceExit;
@@ -178,6 +182,30 @@ public partial class App : Application
         // 9. 错误事件（后台线程）→ 托盘变红 + 中文前缀气泡
         engine.EngineError += (error, message) => Dispatcher.BeginInvoke(() => OnEngineErrorForTray(error, message));
 
+        // 健康提醒系统（独立实例，不随引擎 Stop/Start/Restart 重建）
+        Health = new HealthMonitor(Settings.Health);
+        // 帧样本入口：OnSample 内部自带锁，后台采集线程直接调用安全，无需封送
+        engine.HealthSampleReady += sample => Health.OnSample(sample);
+        // 提醒触发（后台线程）→ 封送 UI 线程：托盘气泡 + 主窗口消息栏
+        Health.ReminderTriggered += (kind, message) => Dispatcher.BeginInvoke(() =>
+        {
+            string title = kind switch
+            {
+                HealthReminderKind.Sedentary => "久坐提醒",
+                HealthReminderKind.NearDistance => "用眼距离提醒",
+                HealthReminderKind.Slouch => "坐姿提醒",
+                HealthReminderKind.Water => "喝水提醒",
+                _ => "放松提醒"
+            };
+            _tray?.ShowBubble(title, message, ToolTipIcon.Info);
+            _mainWindow?.ShowHealthNotice(message);
+        });
+        // 定时 tick：喝水/放松计时 + 久坐/距离/低头超时兜底，每分钟一次；
+        // UI 线程常驻运行（不依赖引擎/摄像头），应用退出时停止
+        _healthTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        _healthTimer.Tick += (_, _) => Health.OnTimerTick(DateTime.UtcNow);
+        _healthTimer.Start();
+
         // 10. 托盘（向导流程与主窗口流程都需要，先创建）
         _tray = new TrayIconService();
         _tray.ShowMainWindowRequested += () => Dispatcher.BeginInvoke(ShowMainWindow);
@@ -230,7 +258,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // 释放顺序：热键退订 → 引擎（停采集、补发 Hide、释放推理服务）→ 遮罩窗口 → 托盘 → 热键 → 互斥体
+        // 释放顺序：健康定时器停走 → 热键退订 → 引擎（停采集、补发 Hide、释放推理服务）→ 遮罩窗口 → 托盘 → 热键 → 互斥体
+        _healthTimer?.Stop();
         HotkeyService.HotkeyPressed -= OnHotkeyPressed;
         Engine?.Dispose();
         Masks?.Dispose();

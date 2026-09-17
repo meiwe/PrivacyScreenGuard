@@ -15,8 +15,9 @@ namespace PrivacyScreenGuard.Services;
 ///
 /// <para><b>线程模型</b>：全部帧处理在摄像头后台采集线程上同步执行（CameraService 的采集循环
 /// 同步调用帧回调，天然限流，引擎内部不再另开线程）。所有事件
-/// （<see cref="MaskActionRequested"/> / <see cref="StatusChanged"/> / <see cref="EngineError"/>）
-/// 均在后台线程触发——WPF 订阅方必须自行通过 Dispatcher 封送到 UI 线程后再操作 UI。</para>
+/// （<see cref="MaskActionRequested"/> / <see cref="StatusChanged"/> / <see cref="EngineError"/> /
+/// <see cref="HealthSampleReady"/>）均在后台线程触发——WPF 订阅方必须自行通过
+/// Dispatcher 封送到 UI 线程后再操作 UI。</para>
 ///
 /// <para><b>隐私要求</b>：任何 Mat 不得保存到磁盘、不得缓存超过一帧、处理完立即释放；
 /// 对齐产生的中间 Mat 在每张人脸处理完后立即 Dispose。</para>
@@ -82,6 +83,12 @@ public sealed class GuardEngine : IDisposable
     /// <b>后台线程触发</b>，WPF 订阅方需经 Dispatcher 封送。
     /// </summary>
     public event Action<CameraError, string>? EngineError;
+
+    /// <summary>
+    /// 健康采样事件：每帧检测后发布的几何摘要（仅数字，绝不含图像/特征向量），
+    /// 供健康提醒系统复用检测结果。<b>后台采集线程触发</b>，订阅方如需操作 UI 需自行封送。
+    /// </summary>
+    public event Action<HealthSample>? HealthSampleReady;
 
     /// <summary>
     /// 创建守护引擎。
@@ -486,6 +493,77 @@ public sealed class GuardEngine : IDisposable
                 ? "监控中：发现面孔，未匹配到主人"
                 : $"监控中：发现 {faceCount} 张面孔，均未匹配到主人（相似度 {bestSim:F2}）"
         });
+
+        // 6. 健康采样发布（每帧最多一次，锁外，复用本帧已提取的检测数据）：
+        // 健康提醒属附加能力，任何异常（含订阅方回调抛出）静默跳过本帧采样，不影响守护主流程
+        try
+        {
+            HealthSampleReady?.Invoke(
+                BuildHealthSample(faces, frame.Width, frame.Height, hasUsableFace));
+        }
+        catch
+        {
+            // 静默跳过：采样/订阅方异常不应影响守护主流程（状态机判定已在此前完成）
+        }
+    }
+
+    /// <summary>
+    /// 从本帧检测结果提取健康采样（纯几何摘要，仅数字，绝不含图像/特征向量）。
+    /// 每帧最多调用一次，结果经 <see cref="HealthSampleReady"/> 发布。
+    /// </summary>
+    /// <param name="faces">本帧全部人脸检测结果（YuNet，含 5 关键点：左眼/右眼/鼻尖/左嘴角/右嘴角）。</param>
+    /// <param name="frameWidth">帧宽度（像素）。</param>
+    /// <param name="frameHeight">帧高度（像素）。</param>
+    /// <param name="anyUsableFace">本帧是否存在可用人脸（复用姿态过滤结论；严格模式下所有人脸均可用）。</param>
+    private static HealthSample BuildHealthSample(List<FaceInfo> faces, int frameWidth, int frameHeight,
+        bool anyUsableFace)
+    {
+        // 无检出脸：仅发布"无人"采样（FacePresent=false，其余数值为零值/空值）
+        if (faces.Count == 0)
+        {
+            return new HealthSample(DateTime.UtcNow, FacePresent: false, MaxFaceWidthRatio: 0,
+                PitchRatio: null, IsFrontal: false);
+        }
+
+        // 所有检出脸中最大的"人脸框宽 / 帧图像宽"（用于用眼距离估计），并记下最大脸
+        double maxWidthRatio = 0;
+        FaceInfo? largest = null;
+        foreach (FaceInfo face in faces)
+        {
+            if (frameWidth <= 0 || face.Box.Width <= 0)
+            {
+                continue;
+            }
+            double ratio = (double)face.Box.Width / frameWidth;
+            if (ratio > maxWidthRatio)
+            {
+                maxWidthRatio = ratio;
+                largest = face;
+            }
+        }
+
+        // 低头比例仅对最大脸且正脸时计算：
+        // ratio = (鼻尖Y - 双眼中心Y) / (嘴角中心Y - 双眼中心Y)；关键点缺失或分母 ≤ 0（几何异常）时为 null
+        double? pitchRatio = null;
+        bool isFrontal = false;
+        if (largest is FaceInfo best)
+        {
+            // 正脸判定复用守护引擎现有的姿态判据（鼻尖相对双眼中心的水平偏移）
+            isFrontal = FacePose.IsFrontalEnough(best, frameWidth, frameHeight);
+
+            if (isFrontal && best.Landmarks is { Length: 5 })
+            {
+                double eyesMidY = (best.Landmarks[0].Y + best.Landmarks[1].Y) / 2.0;    // 左眼 + 右眼
+                double mouthMidY = (best.Landmarks[3].Y + best.Landmarks[4].Y) / 2.0;   // 左嘴角 + 右嘴角
+                double denominator = mouthMidY - eyesMidY;
+                if (denominator > 0)
+                {
+                    pitchRatio = (best.Landmarks[2].Y - eyesMidY) / denominator;        // 鼻尖
+                }
+            }
+        }
+
+        return new HealthSample(DateTime.UtcNow, anyUsableFace, maxWidthRatio, pitchRatio, isFrontal);
     }
 
     /// <summary>

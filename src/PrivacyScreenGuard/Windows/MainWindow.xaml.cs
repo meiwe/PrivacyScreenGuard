@@ -90,6 +90,24 @@ public partial class MainWindow : Window
         ChkAutostart.Unchecked += OnAutostartToggled;
         ChkCameraEnabled.Checked += OnCameraEnabledToggled;
         ChkCameraEnabled.Unchecked += OnCameraEnabledToggled;
+        // 健康提醒：五个开关与五个滑块统一走 OnHealthSettingChanged
+        // （ValueChanged 的参数类型 RoutedPropertyChangedEventArgs<double> 派生自 RoutedEventArgs，
+        //   方法组参数逆变允许与 Checked/Unchecked 共用同一处理器）
+        ChkSedentary.Checked += OnHealthSettingChanged;
+        ChkSedentary.Unchecked += OnHealthSettingChanged;
+        SldSedentary.ValueChanged += OnHealthSettingChanged;
+        ChkNear.Checked += OnHealthSettingChanged;
+        ChkNear.Unchecked += OnHealthSettingChanged;
+        SldNear.ValueChanged += OnHealthSettingChanged;
+        ChkSlouch.Checked += OnHealthSettingChanged;
+        ChkSlouch.Unchecked += OnHealthSettingChanged;
+        SldSlouch.ValueChanged += OnHealthSettingChanged;
+        ChkWater.Checked += OnHealthSettingChanged;
+        ChkWater.Unchecked += OnHealthSettingChanged;
+        SldWater.ValueChanged += OnHealthSettingChanged;
+        ChkBreak.Checked += OnHealthSettingChanged;
+        ChkBreak.Unchecked += OnHealthSettingChanged;
+        SldBreak.ValueChanged += OnHealthSettingChanged;
         BtnClearTemplate.Click += OnClearTemplateClick;
         BtnTheme.Click += OnThemeToggleClick;
     }
@@ -172,6 +190,28 @@ public partial class MainWindow : Window
             TxtHotkeyKey.Text = _lastValidHotkeyKey;
             ChkAutostart.IsChecked = _settings.Autostart;
             ChkCameraEnabled.IsChecked = _settings.CameraEnabled;
+
+            // 健康提醒（值已经过 Sanitize 夹取，滑块不会越界；IsEnabled 跟随开关保持视觉一致）
+            ChkSedentary.IsChecked = _settings.Health.SedentaryEnabled;
+            SldSedentary.Value = _settings.Health.SedentaryThresholdMinutes;
+            TxtSedentary.Text = $"{_settings.Health.SedentaryThresholdMinutes}";
+            SldSedentary.IsEnabled = _settings.Health.SedentaryEnabled;
+            ChkNear.IsChecked = _settings.Health.NearEnabled;
+            SldNear.Value = _settings.Health.NearThreshold;
+            TxtNear.Text = _settings.Health.NearThreshold.ToString("0.00");
+            SldNear.IsEnabled = _settings.Health.NearEnabled;
+            ChkSlouch.IsChecked = _settings.Health.SlouchEnabled;
+            SldSlouch.Value = _settings.Health.SlouchThreshold;
+            TxtSlouch.Text = _settings.Health.SlouchThreshold.ToString("0.00");
+            SldSlouch.IsEnabled = _settings.Health.SlouchEnabled;
+            ChkWater.IsChecked = _settings.Health.WaterEnabled;
+            SldWater.Value = _settings.Health.WaterIntervalMinutes;
+            TxtWater.Text = $"{_settings.Health.WaterIntervalMinutes}";
+            SldWater.IsEnabled = _settings.Health.WaterEnabled;
+            ChkBreak.IsChecked = _settings.Health.BreakEnabled;
+            SldBreak.Value = _settings.Health.BreakIntervalMinutes;
+            TxtBreak.Text = $"{_settings.Health.BreakIntervalMinutes}";
+            SldBreak.IsEnabled = _settings.Health.BreakEnabled;
 
             // 主题按钮图标：当前深色 → 显示 ☀️（点击切明亮）；当前明亮 → 显示 🌙（点击切深色）
             TxtThemeIcon.Text = _settings.Theme == "dark" ? "☀" : "☾";
@@ -727,6 +767,54 @@ public partial class MainWindow : Window
             _engine.Stop();
         }
         UpdateEngineUi(); // 状态文本与托盘由引擎 StatusChanged 事件统一同步
+    }
+
+    // ==================== 健康提醒 ====================
+
+    /// <summary>
+    /// 健康提醒任一控件变更：从控件读回全部值写入设置 → 保存 → 热更新健康状态机
+    /// （无需重启，<see cref="HealthMonitor.UpdateSettings"/> 会按新值清零已关闭功能的计时）。
+    /// </summary>
+    private void OnHealthSettingChanged(object sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+        {
+            return;
+        }
+
+        bool sedentary = ChkSedentary.IsChecked == true;
+        bool near = ChkNear.IsChecked == true;
+        bool slouch = ChkSlouch.IsChecked == true;
+        bool water = ChkWater.IsChecked == true;
+        bool breakOn = ChkBreak.IsChecked == true;
+
+        _settings.Health.SedentaryEnabled = sedentary;
+        _settings.Health.SedentaryThresholdMinutes = (int)SldSedentary.Value;
+        _settings.Health.NearEnabled = near;
+        _settings.Health.NearThreshold = SldNear.Value;
+        _settings.Health.SlouchEnabled = slouch;
+        _settings.Health.SlouchThreshold = SldSlouch.Value;
+        _settings.Health.WaterEnabled = water;
+        _settings.Health.WaterIntervalMinutes = (int)SldWater.Value;
+        _settings.Health.BreakEnabled = breakOn;
+        _settings.Health.BreakIntervalMinutes = (int)SldBreak.Value;
+
+        // 开关关闭时对应滑块禁用（视觉与逻辑一致）
+        SldSedentary.IsEnabled = sedentary;
+        SldNear.IsEnabled = near;
+        SldSlouch.IsEnabled = slouch;
+        SldWater.IsEnabled = water;
+        SldBreak.IsEnabled = breakOn;
+
+        SettingsService.Save(_settings);
+        App.Health?.UpdateSettings(_settings.Health);
+        ShowMessage("健康提醒设置已保存");
+    }
+
+    /// <summary>健康提醒通知：写入底部消息栏（App 在 UI 线程经此转发健康提醒文案）。</summary>
+    public void ShowHealthNotice(string message)
+    {
+        ShowMessage(message);
     }
 
     // ==================== 隐私与数据 ====================

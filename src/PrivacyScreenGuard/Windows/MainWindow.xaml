@@ -307,7 +307,132 @@
                     </StackPanel>
                 </GroupBox>
 
-                <!-- ============ 6. 隐私与数据（危险区） ============ -->
+                <!-- ============ 6. 健康提醒 ============ -->
+                <GroupBox Header="HEALTH · 健康提醒" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <!-- 行：标签（标题+说明）· 滑块 · 数值 · 开关，行间发丝分隔 -->
+                        <Grid MinHeight="56">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="久坐提醒" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="连续在场分钟数" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <Slider x:Name="SldSedentary" Grid.Column="1" Minimum="15" Maximum="120" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="5" IsSnapToTickEnabled="True" SmallChange="5" LargeChange="10"
+                                    VerticalAlignment="Center" Margin="24,0,20,0"
+                                    ToolTip="连续在场超过设定分钟数后提醒起身活动"/>
+                            <TextBlock x:Name="TxtSedentary" Grid.Column="2" Text="45" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <ToggleButton x:Name="ChkSedentary" Grid.Column="3" Style="{StaticResource LuxSwitch}"
+                                          VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="56">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="用眼距离" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="脸宽占比阈值" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <Slider x:Name="SldNear" Grid.Column="1" Minimum="0.25" Maximum="0.5" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="0.01" IsSnapToTickEnabled="True" SmallChange="0.01" LargeChange="0.02"
+                                    VerticalAlignment="Center" Margin="24,0,20,0"
+                                    ToolTip="人脸框宽占画面宽度的比例超过该值视为距离过近；越小越灵敏"/>
+                            <TextBlock x:Name="TxtNear" Grid.Column="2" Text="0.35" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <ToggleButton x:Name="ChkNear" Grid.Column="3" Style="{StaticResource LuxSwitch}"
+                                          VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="56">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="低头坐姿" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="低头比例阈值" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <Slider x:Name="SldSlouch" Grid.Column="1" Minimum="0.5" Maximum="0.8" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="0.01" IsSnapToTickEnabled="True" SmallChange="0.01" LargeChange="0.02"
+                                    VerticalAlignment="Center" Margin="24,0,20,0"
+                                    ToolTip="低头程度比例超过该值开始计时，持续过久提醒挺直腰背"/>
+                            <TextBlock x:Name="TxtSlouch" Grid.Column="2" Text="0.62" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <ToggleButton x:Name="ChkSlouch" Grid.Column="3" Style="{StaticResource LuxSwitch}"
+                                          VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="56">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="喝水提醒" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="间隔分钟数" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <Slider x:Name="SldWater" Grid.Column="1" Minimum="15" Maximum="180" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="15" IsSnapToTickEnabled="True" SmallChange="15" LargeChange="30"
+                                    VerticalAlignment="Center" Margin="24,0,20,0"
+                                    ToolTip="每隔设定分钟数提醒补充水分"/>
+                            <TextBlock x:Name="TxtWater" Grid.Column="2" Text="60" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <ToggleButton x:Name="ChkWater" Grid.Column="3" Style="{StaticResource LuxSwitch}"
+                                          VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid MinHeight="56">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="44"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="放松提醒" FontSize="13" Foreground="{DynamicResource Fg.Secondary}"/>
+                                <TextBlock Text="间隔分钟数" FontSize="11"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                            <Slider x:Name="SldBreak" Grid.Column="1" Minimum="10" Maximum="120" Style="{StaticResource MinimalSlider}"
+                                    TickFrequency="10" IsSnapToTickEnabled="True" SmallChange="10" LargeChange="20"
+                                    VerticalAlignment="Center" Margin="24,0,20,0"
+                                    ToolTip="每隔设定分钟数提醒远眺放松眼睛"/>
+                            <TextBlock x:Name="TxtBreak" Grid.Column="2" Text="30" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <ToggleButton x:Name="ChkBreak" Grid.Column="3" Style="{StaticResource LuxSwitch}"
+                                          VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </Grid>
+
+                        <!-- 卡片脚注：健康能力的数据边界说明 -->
+                        <TextBlock Text="健康分析仅使用人脸几何数据，本机处理，不上传不保存；距离与坐姿为粗略估算，仅供参考"
+                                   FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource Fg.Tertiary}" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- ============ 7. 隐私与数据（危险区） ============ -->
                 <GroupBox Header="PRIVACY · 隐私与数据" Style="{StaticResource Card}" Margin="0">
                     <StackPanel>
                         <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储，仅保存在本机当前用户目录。"

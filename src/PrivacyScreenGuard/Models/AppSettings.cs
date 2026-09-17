@@ -82,6 +82,9 @@ public sealed class AppSettings
     /// </summary>
     public string Theme { get; set; } = "light";
 
+    /// <summary>健康提醒设置（久坐/用眼距离/低头坐姿/喝水/放松，默认全部关闭）。</summary>
+    public HealthSettings Health { get; set; } = new();
+
     /// <summary>
     /// 把带范围约定的数值字段夹取到各自合法范围，保证设置始终可用。
     /// </summary>
@@ -98,5 +101,73 @@ public sealed class AppSettings
         {
             Theme = "light";
         }
+
+        // 健康设置子对象的数值字段统一夹取（JSON 显式 null 时保持 null，由持久化层兜底）
+        Health?.Sanitize();
+    }
+}
+
+/// <summary>
+/// 健康提醒设置：久坐/用眼距离/低头坐姿由摄像头帧样本驱动，喝水/放松由定时器驱动；
+/// 五项功能全部默认关闭，用户在设置界面按需开启。数值字段由 <see cref="Sanitize"/> 夹取。
+/// </summary>
+public sealed class HealthSettings
+{
+    /// <summary>是否启用久坐提醒（默认 false）。</summary>
+    public bool SedentaryEnabled { get; set; } = false;
+
+    /// <summary>连续在场多少分钟后提醒活动（范围 15–120，默认 45）。</summary>
+    public int SedentaryThresholdMinutes { get; set; } = 45;
+
+    /// <summary>是否启用用眼距离提醒（默认 false）。</summary>
+    public bool NearEnabled { get; set; } = false;
+
+    /// <summary>人脸框宽/图像宽超过该比例视为距离过近（范围 0.25–0.5，默认 0.35）。</summary>
+    public double NearThreshold { get; set; } = 0.35;
+
+    /// <summary>距离过近持续多少秒后提醒（范围 5–60，默认 10）。</summary>
+    public int NearSeconds { get; set; } = 10;
+
+    /// <summary>是否启用低头坐姿提醒（默认 false）。</summary>
+    public bool SlouchEnabled { get; set; } = false;
+
+    /// <summary>低头比例超过该值视为低头（范围 0.5–0.8，默认 0.62）。</summary>
+    public double SlouchThreshold { get; set; } = 0.62;
+
+    /// <summary>低头持续多少秒后提醒（范围 10–120，默认 30）。</summary>
+    public int SlouchSeconds { get; set; } = 30;
+
+    /// <summary>是否启用喝水提醒（默认 false）。</summary>
+    public bool WaterEnabled { get; set; } = false;
+
+    /// <summary>每隔多少分钟提醒喝水（范围 15–180，默认 60）。</summary>
+    public int WaterIntervalMinutes { get; set; } = 60;
+
+    /// <summary>是否启用放松（远眺）提醒（默认 false）。</summary>
+    public bool BreakEnabled { get; set; } = false;
+
+    /// <summary>每隔多少分钟提醒放松远眺（范围 10–120，默认 30）。</summary>
+    public int BreakIntervalMinutes { get; set; } = 30;
+
+    /// <summary>同类提醒的最小间隔分钟数（范围 1–60，默认 10），冷却期内同类型不再触发。</summary>
+    public int ReminderCooldownMinutes { get; set; } = 10;
+
+    /// <summary>把带范围约定的数值字段夹取到各自合法范围，保证设置始终可用。</summary>
+    public void Sanitize()
+    {
+        SedentaryThresholdMinutes = Math.Clamp(SedentaryThresholdMinutes, 15, 120);
+        NearThreshold = Math.Clamp(NearThreshold, 0.25, 0.5);
+        NearSeconds = Math.Clamp(NearSeconds, 5, 60);
+        SlouchThreshold = Math.Clamp(SlouchThreshold, 0.5, 0.8);
+        SlouchSeconds = Math.Clamp(SlouchSeconds, 10, 120);
+        WaterIntervalMinutes = Math.Clamp(WaterIntervalMinutes, 15, 180);
+        BreakIntervalMinutes = Math.Clamp(BreakIntervalMinutes, 10, 120);
+        ReminderCooldownMinutes = Math.Clamp(ReminderCooldownMinutes, 1, 60);
+    }
+
+    /// <summary>创建当前设置的副本（供健康提醒状态机内部保存快照，避免共享可变引用）。</summary>
+    public HealthSettings Clone()
+    {
+        return (HealthSettings)MemberwiseClone();
     }
 }
