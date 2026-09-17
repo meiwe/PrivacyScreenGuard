@@ -147,7 +147,7 @@
                                                 <!-- 滑块头：纯白圆形 + 细微阴影，绝不使用方角 -->
                                                 <Ellipse Fill="{DynamicResource Bg.Card}" Stroke="{DynamicResource Bg.Border}" StrokeThickness="0.5">
                                                     <Ellipse.Effect>
-                                                        <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270"
+                                                        <DropShadowEffect x:Name="knobShadow" BlurRadius="6" ShadowDepth="1" Direction="270"
                                                                           Opacity="0.25" Color="#000000"/>
                                                     </Ellipse.Effect>
                                                 </Ellipse>
@@ -180,6 +180,53 @@
                                                                                  To="1" Duration="0:0:0.3"/>
                                                                 <DoubleAnimation Storyboard.TargetName="thumbScale" Storyboard.TargetProperty="ScaleY"
                                                                                  To="1" Duration="0:0:0.3"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
+                                                </Trigger>
+                                                <Trigger Property="IsDragging" Value="True">
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <!-- 拖动中：放大 1.15 + 阴影加深抬起，给出明确的抓取反馈 -->
+                                                                <DoubleAnimation Storyboard.TargetName="thumbScale" Storyboard.TargetProperty="ScaleX"
+                                                                                 To="1.15" Duration="0:0:0.3">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="thumbScale" Storyboard.TargetProperty="ScaleY"
+                                                                                 To="1.15" Duration="0:0:0.3">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="knobShadow" Storyboard.TargetProperty="BlurRadius"
+                                                                                 To="12" Duration="0:0:0.3">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="knobShadow" Storyboard.TargetProperty="Opacity"
+                                                                                 To="0.4" Duration="0:0:0.3">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="thumbScale" Storyboard.TargetProperty="ScaleX"
+                                                                                 To="1" Duration="0:0:0.3"/>
+                                                                <DoubleAnimation Storyboard.TargetName="thumbScale" Storyboard.TargetProperty="ScaleY"
+                                                                                 To="1" Duration="0:0:0.3"/>
+                                                                <DoubleAnimation Storyboard.TargetName="knobShadow" Storyboard.TargetProperty="BlurRadius"
+                                                                                 To="6" Duration="0:0:0.3"/>
+                                                                <DoubleAnimation Storyboard.TargetName="knobShadow" Storyboard.TargetProperty="Opacity"
+                                                                                 To="0.25" Duration="0:0:0.3"/>
                                                             </Storyboard>
                                                         </BeginStoryboard>
                                                     </Trigger.ExitActions>
