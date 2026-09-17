@@ -58,6 +58,9 @@ public sealed class AppSettings
     /// <summary>是否开机自启（默认 false）。</summary>
     public bool Autostart { get; set; } = false;
 
+    /// <summary>启动时自动检查更新（默认 true）：静默调用 GitHub Releases API，有新版才提示；失败静默。</summary>
+    public bool CheckUpdatesOnStartup { get; set; } = true;
+
     /// <summary>全局热键修饰键（默认 Ctrl+Alt）。</summary>
     public string HotkeyModifiers { get; set; } = "Ctrl+Alt";
 

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -108,6 +109,10 @@ public partial class MainWindow : Window
         ChkBreak.Checked += OnHealthSettingChanged;
         ChkBreak.Unchecked += OnHealthSettingChanged;
         SldBreak.ValueChanged += OnHealthSettingChanged;
+        // 更新检查
+        BtnCheckUpdates.Click += OnCheckUpdatesClick;
+        ChkCheckUpdates.Checked += OnCheckUpdatesToggled;
+        ChkCheckUpdates.Unchecked += OnCheckUpdatesToggled;
         BtnClearTemplate.Click += OnClearTemplateClick;
         BtnTheme.Click += OnThemeToggleClick;
     }
@@ -137,6 +142,16 @@ public partial class MainWindow : Window
 
         InitializeControls();
         await RefreshCamerasAsync(_settings.CameraIndex);
+
+        // 启动 30 秒后静默检查更新（失败与无更新均静默，发现新版才提示）
+        if (_settings.CheckUpdatesOnStartup)
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(30_000);
+                await Dispatcher.BeginInvoke(() => CheckUpdatesAsync(silent: true));
+            });
+        }
     }
 
     /// <summary>按当前设置初始化各控件的显示值（程序性赋值，不触发回写）。</summary>
@@ -212,6 +227,10 @@ public partial class MainWindow : Window
             SldBreak.Value = _settings.Health.BreakIntervalMinutes;
             TxtBreak.Text = $"{_settings.Health.BreakIntervalMinutes}";
             SldBreak.IsEnabled = _settings.Health.BreakEnabled;
+
+            // 更新检查
+            TxtAppVersion.Text = $"v{UpdateCheckService.CurrentVersion.ToString(3)}";
+            ChkCheckUpdates.IsChecked = _settings.CheckUpdatesOnStartup;
 
             // 主题按钮图标：当前深色 → 显示 ☀️（点击切明亮）；当前明亮 → 显示 🌙（点击切深色）
             TxtThemeIcon.Text = _settings.Theme == "dark" ? "☀" : "☾";
@@ -835,6 +854,75 @@ public partial class MainWindow : Window
     public void ShowHealthNotice(string message)
     {
         ShowMessage(message);
+    }
+
+    // ==================== 更新检查 ====================
+
+    /// <summary>检查更新按钮：手动检查并给出明确文案反馈。</summary>
+    private async void OnCheckUpdatesClick(object sender, RoutedEventArgs e)
+    {
+        await CheckUpdatesAsync(silent: false);
+    }
+
+    /// <summary>启动时自动检查开关切换：保存设置。</summary>
+    private void OnCheckUpdatesToggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+        {
+            return;
+        }
+        _settings.CheckUpdatesOnStartup = ChkCheckUpdates.IsChecked == true;
+        SettingsService.Save(_settings);
+        ShowMessage("更新检查设置已保存");
+    }
+
+    /// <summary>
+    /// 检查更新。silent=true（启动自动检查）：失败与无更新静默，发现新版弹窗询问；
+    /// silent=false（手动点击）：所有结果均有文案反馈。
+    /// </summary>
+    private async Task CheckUpdatesAsync(bool silent)
+    {
+        BtnCheckUpdates.IsEnabled = false;
+        if (!silent)
+        {
+            ShowMessage("正在检查更新…");
+        }
+        try
+        {
+            var result = await new UpdateCheckService().CheckAsync();
+            if (result is null)
+            {
+                if (!silent)
+                {
+                    ShowMessage("检查更新失败：暂无网络或仓库暂不可访问", isError: true);
+                }
+                return;
+            }
+            if (!result.HasUpdate)
+            {
+                if (!silent)
+                {
+                    ShowMessage($"当前已是最新版本（v{UpdateCheckService.CurrentVersion.ToString(3)}）");
+                }
+                return;
+            }
+
+            ShowMessage($"发现新版本 v{result.LatestVersion}！");
+            var choice = MessageBox.Show(this,
+                $"发现新版本 v{result.LatestVersion}，是否前往下载页获取？",
+                "软件更新", MessageBoxButton.YesNo, MessageBoxImage.Information);
+            if (choice == MessageBoxResult.Yes)
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(result.ReleaseUrl)
+                {
+                    UseShellExecute = true,
+                });
+            }
+        }
+        finally
+        {
+            BtnCheckUpdates.IsEnabled = true;
+        }
     }
 
     // ==================== 隐私与数据 ====================

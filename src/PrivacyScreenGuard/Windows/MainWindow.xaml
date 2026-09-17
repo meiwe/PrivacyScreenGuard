@@ -432,7 +432,32 @@
                     </StackPanel>
                 </GroupBox>
 
-                <!-- ============ 7. 隐私与数据（危险区） ============ -->
+                <!-- ============ 7. 更新 ============ -->
+                <GroupBox Header="更新" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid Height="52">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="当前版本" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtAppVersion" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                <Button x:Name="BtnCheckUpdates" Content="检查更新" MinWidth="96" Margin="20,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource Bg.Border}"/>
+
+                        <Grid Height="52">
+                            <TextBlock Text="启动时自动检查" VerticalAlignment="Center" FontSize="13"/>
+                            <ToggleButton x:Name="ChkCheckUpdates" Style="{StaticResource LuxSwitch}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          ToolTip="启动后 30 秒静默检查 GitHub 最新版本，发现新版才提示；关闭后仅手动检查"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- ============ 8. 隐私与数据（危险区） ============ -->
                 <GroupBox Header="隐私与数据" Style="{StaticResource Card}" Margin="0">
                     <StackPanel>
                         <TextBlock Text="所有画面仅本地处理，不上传、不录制、不保存。主人特征以 DPAPI 加密存储，仅保存在本机当前用户目录。"
