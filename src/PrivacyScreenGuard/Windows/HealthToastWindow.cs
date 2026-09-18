@@ -146,27 +146,35 @@ public sealed class HealthToastWindow : Window
 
         if (!_shownOnce)
         {
-            // 首次：先以透明态显示完成布局测量，再定位到主屏右下角
+            // 首次：以透明态显示（窗口句柄创建 + 尺寸测量）
             Opacity = 0;
             Show();
-            PositionAtCorner();
             _shownOnce = true;
         }
-        else
-        {
-            PositionAtCorner();
-        }
 
-        PlayEnter();
-        RestartHideTimer();
+        // 关键：定位与动画延迟到"布局已完成"之后执行。
+        // SizeToContent 窗口 Show() 返回时 ActualWidth/ActualHeight 可能仍为 0，
+        // 立即定位会把窗口算到主屏右缘之外（Width=0 时 Left=右缘-24，展开后窗口几乎全在屏外），
+        // 表现为"横幅不显示"。Loaded 优先级保证在当次布局 pass 完成后执行。
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+        {
+            if (IsLoaded && !_hiding)
+            {
+                PositionAtCorner();
+                PlayEnter();
+                RestartHideTimer();
+            }
+        });
     }
 
-    /// <summary>把横幅定位到主屏工作区（任务栏上方）右下角，边距 24 DIP。</summary>
+    /// <summary>把横幅定位到主屏工作区（任务栏上方）右下角，边距 24 DIP；尺寸异常时夹回屏幕内。</summary>
     private void PositionAtCorner()
     {
         var wa = SystemParameters.WorkArea; // 主屏工作区（DIP，已扣除任务栏）
-        Left = wa.Right - ActualWidth - 24;
-        Top = wa.Bottom - ActualHeight - 24;
+        double width = ActualWidth > 0 ? ActualWidth : 360;  // 布局未就绪时的兜底宽度
+        double height = ActualHeight > 0 ? ActualHeight : 80;
+        Left = Math.Max(8, wa.Right - width - 24);
+        Top = Math.Max(8, wa.Bottom - height - 24);
     }
 
     /// <summary>入场：右侧 48DIP 滑入 + 淡入（0.3s 缓出）。</summary>
