@@ -116,8 +116,6 @@ public partial class MainWindow : Window
         // 遮罩自定义文案
         TxtMaskTitle.TextChanged += OnMaskTextChanged;
         TxtMaskSubtitle.TextChanged += OnMaskTextChanged;
-        // 健康提醒测试按钮
-        BtnTestReminder.Click += OnTestReminderClick;
         BtnClearTemplate.Click += OnClearTemplateClick;
         BtnTheme.Click += OnThemeToggleClick;
     }
@@ -892,26 +890,6 @@ public partial class MainWindow : Window
     public void ShowHealthNotice(string message)
     {
         ShowMessage(message);
-    }
-
-    /// <summary>
-    /// 测试提醒按钮：立即模拟一条喝水提醒，走与真实提醒完全相同的全链路
-    /// （App 的 ReminderTriggered 处理器 → 自绘横幅 + 托盘气泡 + 底部消息栏），
-    /// 并把喝水倒计时的状态机内部值写入消息栏，便于定位"到点不弹"问题。
-    /// </summary>
-    private void OnTestReminderClick(object sender, RoutedEventArgs e)
-    {
-        DateTime now = DateTime.UtcNow;
-        double? waterLeft = App.Health?.GetCountdown(HealthReminderKind.Water, now);
-        string diag = waterLeft is null
-            ? "喝水倒计时：未开启或未开始计时"
-            : $"喝水倒计时：剩 {FormatCountdown(waterLeft.Value)}";
-
-        // 1. 直接触发一条演示提醒（与真实提醒同一事件链路，非绕过）
-        App.Health?.TriggerIntroOnce(HealthReminderKind.Water, now);
-
-        // 2. 消息栏输出诊断（TriggerIntroOnce 已写"该喝口水了…"，稍后覆盖为诊断信息）
-        ShowMessage($"测试提醒已发送（横幅+气泡）；{diag}");
     }
 
     // ==================== 遮罩自定义文案 ====================

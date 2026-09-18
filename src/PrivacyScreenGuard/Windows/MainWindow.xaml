@@ -452,20 +452,10 @@
                                           VerticalAlignment="Center" Margin="16,0,0,0"/>
                         </Grid>
 
-                        <!-- 卡片脚注：说明 + 测试按钮 -->
-                        <Grid Margin="0,12,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="健康分析仅使用人脸几何数据，本机处理，不上传不保存；距离与坐姿为粗略估算，仅供参考"
-                                       FontSize="11" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource Fg.Tertiary}"
-                                       VerticalAlignment="Center" MaxWidth="520" HorizontalAlignment="Left"/>
-                            <Button x:Name="BtnTestReminder" Grid.Column="1" Content="测试提醒"
-                                    MinWidth="88" VerticalAlignment="Center" Margin="16,0,0,0"
-                                    ToolTip="立即模拟一条喝水提醒，验证横幅/气泡/消息栏通道是否工作"/>
-                        </Grid>
+                        <!-- 卡片脚注：健康能力的数据边界说明 -->
+                        <TextBlock Text="健康分析仅使用人脸几何数据，本机处理，不上传不保存；距离与坐姿为粗略估算，仅供参考"
+                                   FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource Fg.Tertiary}" Margin="0,12,0,0"/>
                     </StackPanel>
                 </GroupBox>
 
