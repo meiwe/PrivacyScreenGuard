@@ -218,6 +218,49 @@ public class HealthMonitorTests
         Assert.Equal(HealthReminderKind.Break, _fired[0].Kind);
     }
 
+    // ---------------- 开启即演示（TriggerIntroOnce） ----------------
+
+    [Fact]
+    public void 演示_开启状态下立即触发一次_且从当前时刻重新起算()
+    {
+        var monitor = Create(new HealthSettings { WaterEnabled = true, WaterIntervalMinutes = 60 });
+
+        // 先模拟残留起点：已推进 59 分钟（未触发）
+        monitor.OnTimerTick(T(0));
+        monitor.OnTimerTick(T(59 * 60));
+        Assert.Empty(_fired);
+
+        // 用户此刻打开开关 → 演示触发一次，旧起点作废
+        monitor.TriggerIntroOnce(HealthReminderKind.Water, T(59 * 60 + 30));
+        Assert.Single(_fired);
+        Assert.Equal(HealthReminderKind.Water, _fired[0].Kind);
+
+        // 演示后从当前时刻重新起算：10 分钟后的 tick 定新起点（anchor 为空 → 定起点不触发）
+        monitor.OnTimerTick(T(69 * 60 + 30));
+        Assert.Single(_fired);
+
+        // 新起点（T 69:00+30）再过 60 分钟 → 正常触发
+        monitor.OnTimerTick(T(129 * 60 + 30));
+        Assert.Equal(2, _fired.Count);
+    }
+
+    [Fact]
+    public void 演示_未开启或非定时类型_不触发()
+    {
+        var monitor = Create(new HealthSettings { WaterEnabled = false, BreakEnabled = true });
+
+        // 喝水未开启 → 无效果
+        monitor.TriggerIntroOnce(HealthReminderKind.Water, T(0));
+        // 久坐是样本驱动类型，不参与演示
+        monitor.TriggerIntroOnce(HealthReminderKind.Sedentary, T(0));
+        Assert.Empty(_fired);
+
+        // 放松已开启 → 触发
+        monitor.TriggerIntroOnce(HealthReminderKind.Break, T(0));
+        Assert.Single(_fired);
+        Assert.Equal(HealthReminderKind.Break, _fired[0].Kind);
+    }
+
     // ---------------- 热更新 ----------------
 
     [Fact]

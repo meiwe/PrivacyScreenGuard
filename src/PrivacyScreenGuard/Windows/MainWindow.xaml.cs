@@ -811,6 +811,17 @@ public partial class MainWindow : Window
             return;
         }
 
+        // 0. 打开喝水/放松开关的瞬间立即演示一条提醒（确认横幅/气泡通道工作；
+        //    计时从当前时刻重新起算，之后按设定间隔正常提醒）
+        if (sender == ChkWater && ChkWater.IsChecked == true)
+        {
+            App.Health?.TriggerIntroOnce(HealthReminderKind.Water, DateTime.UtcNow);
+        }
+        else if (sender == ChkBreak && ChkBreak.IsChecked == true)
+        {
+            App.Health?.TriggerIntroOnce(HealthReminderKind.Break, DateTime.UtcNow);
+        }
+
         // 1. 数值实时联动（等宽字体保证拖动时数字无位移）
         TxtSedentary.Text = SldSedentary.Value.ToString("0");
         TxtNear.Text = SldNear.Value.ToString("0.00");

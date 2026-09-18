@@ -351,6 +351,43 @@ public sealed class HealthMonitor
         _lastTriggerUtc[kind] = nowUtc;
     }
 
+    /// <summary>
+    /// 开启定时类提醒（喝水/放松）时的即时演示触发：立即发送一条该类型提醒，
+    /// 计时起点重置（下次 tick 以当前时刻重新起算，即从开启时刻起算第一个间隔），
+    /// 冷却时间戳同步设为当前时刻。类型未开启或非定时类型时不做任何事。线程安全。
+    /// </summary>
+    public void TriggerIntroOnce(HealthReminderKind kind, DateTime nowUtc)
+    {
+        if (kind is not (HealthReminderKind.Water or HealthReminderKind.Break))
+        {
+            return;
+        }
+
+        List<(HealthReminderKind Kind, string Message)>? pending = null;
+        lock (_sync)
+        {
+            bool enabled = kind == HealthReminderKind.Water ? _settings.WaterEnabled : _settings.BreakEnabled;
+            if (!enabled)
+            {
+                return;
+            }
+
+            // 起点重置：下次 tick 以当前时刻重新起算（避免开启前残留的旧起点导致立刻又触发）
+            if (kind == HealthReminderKind.Water)
+            {
+                _waterAnchorUtc = null;
+            }
+            else
+            {
+                _breakAnchorUtc = null;
+            }
+            MarkTriggered(kind, nowUtc);
+            pending = new List<(HealthReminderKind, string)> { (kind, BuildMessage(kind, 0)) };
+        }
+
+        RaisePending(pending);
+    }
+
     /// <summary>生成温和中文提醒文案（仅久坐需要实际累计分钟数，其余类型忽略该参数）。</summary>
     private static string BuildMessage(HealthReminderKind kind, double sedentaryMinutes) => kind switch
     {
