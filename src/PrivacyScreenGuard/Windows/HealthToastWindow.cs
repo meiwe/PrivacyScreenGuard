@@ -151,14 +151,22 @@ public sealed class HealthToastWindow : Window
             Show();
             _shownOnce = true;
         }
+        else if (!IsVisible)
+        {
+            // 复用修复：上次出场动画结束时窗口被 Hide()（对象仍在、句柄仍在），
+            // 必须重新 Show()，否则后续动画播在隐藏窗口上，横幅永远不再出现
+            Show();
+        }
 
         // 关键：定位与动画延迟到"布局已完成"之后执行。
         // SizeToContent 窗口 Show() 返回时 ActualWidth/ActualHeight 可能仍为 0，
         // 立即定位会把窗口算到主屏右缘之外（Width=0 时 Left=右缘-24，展开后窗口几乎全在屏外），
         // 表现为"横幅不显示"。Loaded 优先级保证在当次布局 pass 完成后执行。
+        // 注意：此回调由 ShowNotice 触发，代表用户最新意图，总是执行——
+        // PlayEnter 会用 SnapshotAndReplace 取消仍在进行的淡出动画并重置 _hiding。
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
         {
-            if (IsLoaded && !_hiding)
+            if (IsLoaded)
             {
                 PositionAtCorner();
                 PlayEnter();
@@ -214,6 +222,12 @@ public sealed class HealthToastWindow : Window
         };
         fadeOut.Completed += (_, _) =>
         {
+            // _hiding 防御：若淡出期间被新提醒打断（动画被 SnapshotAndReplace 替换），
+            // PlayEnter 已把 _hiding 置回 false，此时不得把新入场的窗口藏掉
+            if (!_hiding)
+            {
+                return;
+            }
             Hide();
             _slide.X = SlideOffset;
             Opacity = 0;
