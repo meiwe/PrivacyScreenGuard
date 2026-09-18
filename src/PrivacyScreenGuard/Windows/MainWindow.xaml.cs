@@ -811,15 +811,15 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 0. 打开喝水/放松开关的瞬间立即演示一条提醒（确认横幅/气泡通道工作；
-        //    计时从当前时刻重新起算，之后按设定间隔正常提醒）
+        // 0. 记录"刚打开定时类开关"：演示触发必须等设置同步（防抖回调里的 UpdateSettings）
+        //    之后才能调——否则状态机内部仍是关闭状态，TriggerIntroOnce 会静默返回
         if (sender == ChkWater && ChkWater.IsChecked == true)
         {
-            App.Health?.TriggerIntroOnce(HealthReminderKind.Water, DateTime.UtcNow);
+            _pendingWaterIntro = true;
         }
         else if (sender == ChkBreak && ChkBreak.IsChecked == true)
         {
-            App.Health?.TriggerIntroOnce(HealthReminderKind.Break, DateTime.UtcNow);
+            _pendingBreakIntro = true;
         }
 
         // 1. 数值实时联动（等宽字体保证拖动时数字无位移）
@@ -866,6 +866,18 @@ public partial class MainWindow : Window
         SettingsService.Save(_settings);
         App.Health?.UpdateSettings(_settings.Health);
         ShowMessage("健康提醒设置已保存");
+
+        // 设置已同步 → 处理打开开关时的待演示提醒（横幅 + 气泡 + 消息栏全通道）
+        if (_pendingWaterIntro)
+        {
+            _pendingWaterIntro = false;
+            App.Health?.TriggerIntroOnce(HealthReminderKind.Water, DateTime.UtcNow);
+        }
+        if (_pendingBreakIntro)
+        {
+            _pendingBreakIntro = false;
+            App.Health?.TriggerIntroOnce(HealthReminderKind.Break, DateTime.UtcNow);
+        }
     }
 
     /// <summary>健康提醒通知：写入底部消息栏（App 在 UI 线程经此转发健康提醒文案）。</summary>
@@ -878,6 +890,12 @@ public partial class MainWindow : Window
 
     /// <summary>遮罩文案保存防抖：输入过程中 TextChanged 连续触发，停顿 400ms 后才落盘。</summary>
     private DispatcherTimer? _maskTextDebounce;
+
+    /// <summary>待演示的喝水提醒（打开开关瞬间记录，等设置同步后触发）。</summary>
+    private bool _pendingWaterIntro;
+
+    /// <summary>待演示的放松提醒。</summary>
+    private bool _pendingBreakIntro;
 
     /// <summary>遮罩文案输入变更：立即热更新遮罩窗口（无需等保存），400ms 防抖后持久化。</summary>
     private void OnMaskTextChanged(object sender, TextChangedEventArgs e)
