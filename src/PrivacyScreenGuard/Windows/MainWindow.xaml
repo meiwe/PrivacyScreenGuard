@@ -347,7 +347,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="久坐提醒" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
-                                <TextBlock Text="连续在场分钟数" FontSize="11"
+                                <TextBlock x:Name="TxtSedentaryCountdown" Text="连续在场分钟数" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
                             <Slider x:Name="SldSedentary" Grid.Column="1" Minimum="15" Maximum="120" Style="{StaticResource MinimalSlider}"
@@ -370,7 +370,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="用眼距离" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
-                                <TextBlock Text="脸宽占比阈值" FontSize="11"
+                                <TextBlock x:Name="TxtNearCountdown" Text="脸宽占比阈值" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
                             <Slider x:Name="SldNear" Grid.Column="1" Minimum="0.25" Maximum="0.5" Style="{StaticResource MinimalSlider}"
@@ -393,7 +393,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="低头坐姿" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
-                                <TextBlock Text="低头比例阈值" FontSize="11"
+                                <TextBlock x:Name="TxtSlouchCountdown" Text="低头比例阈值" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
                             <Slider x:Name="SldSlouch" Grid.Column="1" Minimum="0.5" Maximum="0.8" Style="{StaticResource MinimalSlider}"
@@ -416,7 +416,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="喝水提醒" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
-                                <TextBlock Text="间隔分钟数" FontSize="11"
+                                <TextBlock x:Name="TxtWaterCountdown" Text="间隔分钟数" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
                             <Slider x:Name="SldWater" Grid.Column="1" Minimum="15" Maximum="180" Style="{StaticResource MinimalSlider}"
@@ -439,7 +439,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="放松提醒" FontSize="13" Foreground="{DynamicResource Fg.Primary}"/>
-                                <TextBlock Text="间隔分钟数" FontSize="11"
+                                <TextBlock x:Name="TxtBreakCountdown" Text="间隔分钟数" FontSize="11"
                                            Foreground="{DynamicResource Fg.Tertiary}" Margin="0,3,0,0"/>
                             </StackPanel>
                             <Slider x:Name="SldBreak" Grid.Column="1" Minimum="10" Maximum="120" Style="{StaticResource MinimalSlider}"

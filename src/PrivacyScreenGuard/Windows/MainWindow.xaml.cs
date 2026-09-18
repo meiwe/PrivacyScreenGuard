@@ -143,6 +143,12 @@ public partial class MainWindow : Window
         }
         App.EngineRestarted += OnEngineRestarted;
 
+        // 健康提醒倒计时刷新器：每秒更新健康卡的"距下次提醒"显示
+        _healthCountdownTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _healthCountdownTimer.Tick += (_, _) => RefreshHealthCountdowns();
+        _healthCountdownTimer.Start();
+        RefreshHealthCountdowns(); // 立即刷一次
+
         InitializeControls();
         await RefreshCamerasAsync(_settings.CameraIndex);
 
@@ -897,6 +903,67 @@ public partial class MainWindow : Window
     /// <summary>待演示的放松提醒。</summary>
     private bool _pendingBreakIntro;
 
+    /// <summary>健康提醒倒计时刷新器：每秒读取状态机剩余时间并更新卡片显示。</summary>
+    private DispatcherTimer? _healthCountdownTimer;
+
+    /// <summary>每秒刷新健康卡倒计时（读取状态机真实剩余时间，功能关闭时显示原说明文字）。</summary>
+    private void RefreshHealthCountdowns()
+    {
+        DateTime now = DateTime.UtcNow;
+
+        UpdateCountdownText(
+            TxtWaterCountdown, "间隔分钟数",
+            App.Health?.GetCountdown(HealthReminderKind.Water, now),
+            ChkWater.IsChecked == true);
+        UpdateCountdownText(
+            TxtBreakCountdown, "间隔分钟数",
+            App.Health?.GetCountdown(HealthReminderKind.Break, now),
+            ChkBreak.IsChecked == true);
+        UpdateCountdownText(
+            TxtSedentaryCountdown, "连续在场分钟数",
+            App.Health?.GetCountdown(HealthReminderKind.Sedentary, now),
+            ChkSedentary.IsChecked == true);
+        UpdateCountdownText(
+            TxtNearCountdown, "脸宽占比阈值",
+            App.Health?.GetCountdown(HealthReminderKind.NearDistance, now),
+            ChkNear.IsChecked == true);
+        UpdateCountdownText(
+            TxtSlouchCountdown, "低头比例阈值",
+            App.Health?.GetCountdown(HealthReminderKind.Slouch, now),
+            ChkSlouch.IsChecked == true);
+    }
+
+    /// <summary>
+    /// 更新单个倒计时文本：功能开启且状态机在计时 → "距下次提醒 mm:ss"（等宽字体无跳动）；
+    /// 开启但尚未有计时基准（如定时类刚开启还没到首个整分钟 tick）→ "等待计时开始"；
+    /// 功能关闭 → 显示原来的参数说明文字。
+    /// </summary>
+    private static void UpdateCountdownText(TextBlock target, string disabledText, double? seconds, bool enabled)
+    {
+        if (!enabled)
+        {
+            target.Text = disabledText;
+            return;
+        }
+        if (seconds is null)
+        {
+            target.Text = "等待计时开始…";
+            return;
+        }
+        target.Text = $"距下次提醒 {FormatCountdown(seconds.Value)}";
+    }
+
+    /// <summary>秒数格式化：≥1 分钟显示 mm:ss，不足 1 分钟显示整秒。</summary>
+    private static string FormatCountdown(double seconds)
+    {
+        if (seconds >= 60)
+        {
+            int total = (int)Math.Ceiling(seconds);
+            return $"{total / 60:D2}:{total % 60:D2}";
+        }
+        return $"{Math.Ceiling(seconds)} 秒";
+    }
+
     /// <summary>遮罩文案输入变更：立即热更新遮罩窗口（无需等保存），400ms 防抖后持久化。</summary>
     private void OnMaskTextChanged(object sender, TextChangedEventArgs e)
     {
@@ -1065,6 +1132,10 @@ public partial class MainWindow : Window
 
     private void OnWindowClosed(object? sender, EventArgs e)
     {
+        // 停掉倒计时刷新器（窗口真正关闭，避免空转触发器访问已失效控件）
+        _healthCountdownTimer?.Stop();
+        _healthCountdownTimer = null;
+
         // 退订事件，避免窗口重新打开时重复订阅累积
         if (_engine is not null)
         {

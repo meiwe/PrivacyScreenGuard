@@ -388,6 +388,41 @@ public sealed class HealthMonitor
         RaisePending(pending);
     }
 
+    /// <summary>
+    /// 读取指定类型距下次触发的剩余秒数（用于 UI 倒计时显示）。线程安全。
+    /// 返回 null 表示当前不可倒计时（功能未开启 / 尚无计时基准）。
+    /// 定时类（喝水/放松）：从当前时刻到 anchor + 间隔；
+    /// 持续类（久坐/距离/低头）：从当前时刻到"累计达到阈值"的预计时刻（仅静态估算，
+    /// 实际触发依赖摄像头帧流与姿势状态，倒计时只作参考）。
+    /// </summary>
+    public double? GetCountdown(HealthReminderKind kind, DateTime nowUtc)
+    {
+        lock (_sync)
+        {
+            HealthSettings s = _settings;
+            return kind switch
+            {
+                HealthReminderKind.Water => s.WaterEnabled && _waterAnchorUtc is DateTime wa
+                    ? Math.Max(0, (wa + TimeSpan.FromMinutes(s.WaterIntervalMinutes) - nowUtc).TotalSeconds)
+                    : null,
+                HealthReminderKind.Break => s.BreakEnabled && _breakAnchorUtc is DateTime ba
+                    ? Math.Max(0, (ba + TimeSpan.FromMinutes(s.BreakIntervalMinutes) - nowUtc).TotalSeconds)
+                    : null,
+                HealthReminderKind.Sedentary => s.SedentaryEnabled && _sedentaryLastPresent
+                    ? Math.Max(0, s.SedentaryThresholdMinutes * 60
+                        - _sedentarySeconds - Math.Max(0, (nowUtc - _sedentaryLastSampleUtc).TotalSeconds))
+                    : null,
+                HealthReminderKind.NearDistance => s.NearEnabled && _nearSinceUtc is DateTime na
+                    ? Math.Max(0, s.NearSeconds - (nowUtc - na).TotalSeconds)
+                    : null,
+                HealthReminderKind.Slouch => s.SlouchEnabled && _slouchSinceUtc is DateTime sa
+                    ? Math.Max(0, s.SlouchSeconds - (nowUtc - sa).TotalSeconds)
+                    : null,
+                _ => null,
+            };
+        }
+    }
+
     /// <summary>生成温和中文提醒文案（仅久坐需要实际累计分钟数，其余类型忽略该参数）。</summary>
     private static string BuildMessage(HealthReminderKind kind, double sedentaryMinutes) => kind switch
     {
