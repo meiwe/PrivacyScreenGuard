@@ -56,8 +56,10 @@ public partial class MainWindow : Window
     private static readonly Regex HotkeyKeyRegex =
         new("^(?:[A-Z]|[0-9]|F(?:[1-9]|1[0-2]))$", RegexOptions.Compiled);
 
-    /// <summary>检测帧率可选项（与 XAML 中 CmbFps 条目顺序一致）。</summary>
-    private static readonly double[] FpsOptions = { 5, 6, 8, 10 };
+    /// <summary>检测帧率自定义输入的合法范围（超出自动钳制）。</summary>
+    private const double FpsMin = 2;
+
+    private const double FpsMax = 30;
 
     public MainWindow()
     {
@@ -76,7 +78,15 @@ public partial class MainWindow : Window
         SldBlur.ValueChanged += OnBlurChanged;
         ChkStrictPose.Checked += OnStrictPoseToggled;
         ChkStrictPose.Unchecked += OnStrictPoseToggled;
-        CmbFps.SelectionChanged += OnFpsChanged;
+        // 检测帧率自定义输入：失焦或回车提交（钳制 2–30）
+        TxtFps.LostFocus += OnFpsTextCommitted;
+        TxtFps.KeyDown += (_, e) =>
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                OnFpsTextCommitted(TxtFps, new RoutedEventArgs());
+            }
+        };
         CmbNoFacePolicy.SelectionChanged += OnNoFacePolicyChanged;
         CmbMultiPerson.SelectionChanged += OnMultiPersonChanged;
         CmbCamera.SelectionChanged += OnCameraChanged;
@@ -184,7 +194,7 @@ public partial class MainWindow : Window
                 ? "纯黑"
                 : $"{_settings.BlurStrength}";
             ChkStrictPose.IsChecked = _settings.StrictPoseMode;
-            CmbFps.SelectedIndex = NearestFpsIndex(_settings.CaptureFps);
+            TxtFps.Text = _settings.CaptureFps.ToString("0.#");
             CmbNoFacePolicy.SelectedIndex = _settings.NoFacePolicy == NoFacePolicy.Lock ? 1 : 0;
             CmbMultiPerson.SelectedIndex = _settings.MultiPersonPolicy == MultiPersonPolicy.StrangerTriggersMask ? 1 : 0;
 
@@ -456,19 +466,31 @@ public partial class MainWindow : Window
             : "已关闭侧脸识别：侧脸不参与判定（扭头看侧屏不触发，但侧身陌生人也会被放过）");
     }
 
-    private void OnFpsChanged(object sender, SelectionChangedEventArgs e)
+    /// <summary>
+    /// 检测帧率自定义输入提交（失焦/回车）：解析数字并钳制到 2–30，
+    /// 写回归一化文本后保存配置；解析失败回退当前设置值。
+    /// </summary>
+    private void OnFpsTextCommitted(object sender, RoutedEventArgs e)
     {
         if (_suppressEvents)
         {
             return;
         }
-        int index = CmbFps.SelectedIndex;
-        if (index < 0 || index >= FpsOptions.Length)
+
+        if (!double.TryParse(TxtFps.Text.Trim(), out double fps))
         {
+            // 非数字（含清空）：回退当前设置值
+            TxtFps.Text = _settings.CaptureFps.ToString("0.#");
             return;
         }
-        _settings.CaptureFps = FpsOptions[index];
-        SaveAndConfigure();
+
+        double clamped = Math.Clamp(fps, FpsMin, FpsMax);
+        TxtFps.Text = clamped.ToString("0.#"); // 越界时可视化纠正
+        if (Math.Abs(clamped - _settings.CaptureFps) > 0.01)
+        {
+            _settings.CaptureFps = clamped;
+            SaveAndConfigure();
+        }
     }
 
     private void OnNoFacePolicyChanged(object sender, SelectionChangedEventArgs e)
@@ -748,22 +770,6 @@ public partial class MainWindow : Window
         "Alt+Shift" => 2,
         _ => 0
     };
-
-    private static int NearestFpsIndex(double fps)
-    {
-        int best = 0;
-        double bestDiff = double.MaxValue;
-        for (int i = 0; i < FpsOptions.Length; i++)
-        {
-            double diff = Math.Abs(FpsOptions[i] - fps);
-            if (diff < bestDiff)
-            {
-                best = i;
-                bestDiff = diff;
-            }
-        }
-        return best;
-    }
 
     private void OnAutostartToggled(object sender, RoutedEventArgs e)
     {

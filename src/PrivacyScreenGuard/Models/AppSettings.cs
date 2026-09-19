@@ -108,7 +108,7 @@ public sealed class AppSettings
         OwnerThreshold = Math.Clamp(OwnerThreshold, 0.3, 0.9);
         TriggerDelayMs = Math.Clamp(TriggerDelayMs, 300, 800);
         RecoverDelayMs = Math.Clamp(RecoverDelayMs, 500, 1000);
-        CaptureFps = Math.Clamp(CaptureFps, 5, 10);
+        CaptureFps = Math.Clamp(CaptureFps, 2, 30); // 自定义帧率范围：2–30 帧/秒
         BlurStrength = Math.Clamp(BlurStrength, 0, 100);
         DarkThreshold = Math.Clamp(DarkThreshold, 0, 255);
         // 主题只允许两个合法值，非法值回退 light

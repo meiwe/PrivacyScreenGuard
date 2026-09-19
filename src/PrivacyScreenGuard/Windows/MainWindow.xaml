@@ -149,13 +149,13 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="检测帧率" VerticalAlignment="Center" Foreground="{DynamicResource Fg.Primary}"/>
-                            <ComboBox x:Name="CmbFps" Grid.Column="1" Width="150" MinHeight="32" FontSize="13"
-                                      HorizontalAlignment="Left" VerticalAlignment="Center">
-                                <ComboBoxItem Content="5 帧/秒"/>
-                                <ComboBoxItem Content="6 帧/秒"/>
-                                <ComboBoxItem Content="8 帧/秒"/>
-                                <ComboBoxItem Content="10 帧/秒"/>
-                            </ComboBox>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBox x:Name="TxtFps" Width="90" MinHeight="32" FontSize="13" FontFamily="Consolas"
+                                         MaxLength="4" TextAlignment="Center" Style="{StaticResource MinimalTextBox}"
+                                         ToolTip="每秒检测帧数，可自定义 2–30；帧率越高响应越快、CPU 占用越高"/>
+                                <TextBlock Text="帧/秒（2–30）" FontSize="11" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Fg.Tertiary}" Margin="10,0,0,0"/>
+                            </StackPanel>
                         </Grid>
                         <Border Height="1" Background="{DynamicResource Bg.Border}"/>
 
