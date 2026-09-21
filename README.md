@@ -1,10 +1,41 @@
-# PrivacyScreenGuard（摄像头隐私屏）
+<div align="center">
 
-## 1. 项目简介与功能特性
+# 🛡️ 摄像头隐私屏
 
-PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.NET 8）。它通过摄像头在本地检测人脸，并与主人特征比对：当屏幕前出现**非主人**的人脸时，自动在全屏覆盖一层隐私遮罩，把屏幕内容隐藏起来；主人回到镜头前后，遮罩自动解除。
+**别人凑过来，屏幕自己藏起来**
 
-功能特性：
+本地人脸识别 · 非主人入镜自动模糊全屏 · 数据不出本机
+
+PrivacyScreenGuard · Camera Privacy Guard
+
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4)
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)
+![Version](https://img.shields.io/badge/version-v1.0.0-green)
+
+[功能特性](#1-简介与特性) · [快速开始](#2-快速开始) · [使用说明](#3-使用说明) · [技术细节](#4-技术细节) · [重要限制](#5-重要限制)
+
+</div>
+
+![主界面](docs/screenshots/01-guard-status.png)
+
+| 设备选择与快捷启动 | 遮罩外观与健康提醒 | 更新与隐私数据 |
+|---|---|---|
+| ![设备选择与快捷启动](docs/screenshots/02-devices-hotkeys.png) | ![遮罩外观与健康提醒](docs/screenshots/03-mask-health.png) | ![更新与隐私数据](docs/screenshots/04-update-privacy.png) |
+
+## 1. 简介与特性
+
+PrivacyScreenGuard 是一款 Windows 桌面「摄像头隐私屏」（WPF，.NET 8）。它用摄像头在本地识别坐在屏幕前的是不是你：**一旦有陌生人入镜，立刻把整块屏幕模糊遮住**；主人回到镜头前，遮罩自动解除。
+
+全程本地推理，不上传、不录制、不保存任何画面。
+
+| 🔒 本地优先 | 🖥️ 多屏覆盖 | ⚡ 自动响应 | 💾 加密存储 |
+|---|---|---|---|
+| 人脸检测与比对全部在本机 CPU 完成，画面不离开内存 | 全部显示器 / 仅主屏 / 指定屏三种守护范围 | 非主人入镜约 500ms 触发遮罩，主人回归 800ms 解除 | 主人特征经 DPAPI 加密，换用户、换机器均无法解密 |
+
+> **适用场景**：开放工位、共享办公、图书馆、宿舍。临时离开座位不想锁屏时，或在公共场合需要屏幕内容自动隐身时。
+
+### 功能特性
 
 - **本地人脸守护**：YuNet 人脸检测 + SFace 特征识别，与主人的加密特征模板余弦比对，全程本地推理，不依赖任何云端服务。
 - **多屏遮罩**：支持"全部显示器 / 仅主显示器 / 指定显示器"三种守护范围，遮罩同时覆盖所选屏幕。
@@ -17,7 +48,7 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 - **单实例运行**：重复启动会提示"已在运行"并退出。
 - **开机自启**：可选，注册表方式，设置文件为准双向同步。
 
-## 2. 隐私承诺
+### 隐私承诺
 
 - **全本地处理**：人脸检测、特征提取、比对全部在本机 CPU 完成。
 - **唯一的联网行为**：仅在首次运行、模型文件缺失且用户点击确认后下载模型（约 37 MB，来自 OpenCV Zoo 官方仓库）。模型就绪后，正常运行期间不发起任何网络请求；可在设置完成后用防火墙/netstat 自行验证。
@@ -26,30 +57,21 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 - **仅保存加密特征**：落盘的只有 DPAPI 加密后的 128 维特征向量（`%LOCALAPPDATA%\PrivacyScreenGuard\owner.bin`），不含任何图像。
 - **一键清除**：主窗口提供"清除主人人脸数据"，删除加密模板后需重新注册才能继续守护。
 
-## 3. 环境要求
+## 2. 快速开始
+
+### 环境要求
 
 - Windows 10 / 11（x64）
 - .NET 8 SDK（构建与运行源码时需要；单文件发布版无需安装运行时）
 - 可用的摄像头（内置或 USB）
-- （可选）Python 3：仅用于运行模型下载脚本
 
-## 4. NuGet 依赖列表
+### 获取程序
 
-以下依赖均来自 `src/PrivacyScreenGuard/PrivacyScreenGuard.csproj`：
+**方式一：下载发布版（推荐）** —— 到 [Releases](https://github.com/meiwe/PrivacyScreenGuard/releases/latest) 下载单文件 exe，双击即用，无需安装 .NET 运行时。首次启动会提示下载模型（约 37 MB）。
 
-| 包 | 版本 | 用途 |
-|---|---|---|
-| OpenCvSharp4 | 4.13.0.20260627 | OpenCV 的 .NET 封装：摄像头采集（VideoCapture）、DNN 推理（CvDnn）、图像处理（对齐变换等） |
-| OpenCvSharp4.runtime.win | 4.13.0.20260627 | OpenCV 在 Windows 上的原生动态库（随单文件发布一并打包） |
-| OpenCvSharp4.WpfExtensions | 4.13.0.20260627 | Mat 与 WPF BitmapSource 互转（首次注册向导的摄像头预览） |
-| WPF-UI | 4.3.0 | Fluent Design 控件样式与明暗主题服务（Windows 11 观感） |
-| System.Management | 10.0.12 | 通过 WMI 查询摄像头设备名称 |
-| System.Security.Cryptography.ProtectedData | 10.0.12 | DPAPI 加密主人特征模板 |
-| System.Text.Json | 10.0.12 | 读写设置文件 settings.json |
+**方式二：从源码构建** —— 见下方「构建与运行」。
 
-> 说明：本项目使用的 OpenCvSharp 4.13 版本没有 `FaceRecognizerSF` 包装类，因此 SFace 识别通过 `CvDnn` 直接加载 ONNX 推理，5 点对齐使用 `Cv2.EstimateAffinePartial2D` 自行实现（与 OpenCV 官方 SFace 实现数值等价）。
-
-## 5. 模型文件
+### 模型文件
 
 应用启动时必须能找到以下两个模型（缺失则提示并退出）：
 
@@ -72,13 +94,13 @@ PrivacyScreenGuard 是一款 Windows 桌面"摄像头隐私屏"软件（WPF，.N
 
 > 下载源按顺序尝试：GitHub 官方 → 国内镜像（`ghfast.top`、`gh-proxy.com`），任一成功即停；下载先写入 `.tmp` 临时文件，校验大小后原子改名，避免残缺文件被当作模型使用。下载失败时窗口内可点"重试"（会重新遍历下载源）。
 
-## 6. 构建与运行
+### 构建与运行
 
 ```powershell
 # 构建整个解决方案
 dotnet build PrivacyScreenGuard.sln
 
-# 运行（需已按第 5 节准备好 models/ 目录）
+# 运行（需已按上节准备好 models/ 目录）
 dotnet run --project src/PrivacyScreenGuard
 ```
 
@@ -87,9 +109,11 @@ dotnet run --project src/PrivacyScreenGuard
 - 使用 Visual Studio 或 VS Code 打开 `PrivacyScreenGuard.sln` 即可调试（VS Code 需 C# Dev Kit 或 C# 扩展）。
 - 推荐断点：`GuardEngine.OnFrameCaptured` / `GuardEngine.ProcessFrame`（帧处理主链路）、`GuardStateMachine.Process`（状态机判定）。
 - **首次运行**（无主人模板）会自动弹出注册向导；取消向导则应用退出。
-- 单元测试：`dotnet test`（状态机与模板存储共 13 个测试）。
+- 单元测试：`dotnet test`（状态机、健康提醒、多人在场策略、姿态过滤、模板存储共 54 个用例）。
 
-## 7. 发布打包
+> **注意**：`TemplateStoreTests` 直接读写真实的 `%LOCALAPPDATA%\PrivacyScreenGuard\owner.bin`，每个用例开头会 `Delete()` 清场。若本机已注册主人人脸，请先备份该文件再执行 `dotnet test`，否则模板会被清除。
+
+### 发布打包
 
 单文件自包含发布（无需目标机器安装 .NET 运行时）：
 
@@ -105,7 +129,7 @@ Copy-Item -Recurse models publish\models
 
 **MSIX 说明**：如需商店分发或打包安装器，可再用 Visual Studio 的"Windows 应用程序打包项目"向导把发布产物打包为 MSIX；本仓库直接提供单文件 exe 即可满足常规使用。
 
-## 8. 使用说明
+## 3. 使用说明
 
 ### 首次引导（三步多姿态注册）
 
@@ -151,7 +175,25 @@ Copy-Item -Recurse models publish\models
 
 托盘图标右键菜单：**显示主窗口** / **暂停守护·恢复守护**（文案随状态切换）/ **退出**；双击图标等同"显示主窗口"。触发遮罩、摄像头异常（无摄像头/被占用/断开/光线过暗/模型缺失）等关键事件会弹气泡提醒，图标圆点颜色实时反映守护状态。
 
-## 9. 技术实现要点
+## 4. 技术细节
+
+### NuGet 依赖
+
+以下依赖均来自 `src/PrivacyScreenGuard/PrivacyScreenGuard.csproj`：
+
+| 包 | 版本 | 用途 |
+|---|---|---|
+| OpenCvSharp4 | 4.13.0.20260627 | OpenCV 的 .NET 封装：摄像头采集（VideoCapture）、DNN 推理（CvDnn）、图像处理（对齐变换等） |
+| OpenCvSharp4.runtime.win | 4.13.0.20260627 | OpenCV 在 Windows 上的原生动态库（随单文件发布一并打包） |
+| OpenCvSharp4.WpfExtensions | 4.13.0.20260627 | Mat 与 WPF BitmapSource 互转（首次注册向导的摄像头预览） |
+| WPF-UI | 4.3.0 | Fluent Design 控件样式与明暗主题服务（Windows 11 观感） |
+| System.Management | 10.0.12 | 通过 WMI 查询摄像头设备名称 |
+| System.Security.Cryptography.ProtectedData | 10.0.12 | DPAPI 加密主人特征模板 |
+| System.Text.Json | 10.0.12 | 读写设置文件 settings.json |
+
+> 说明：本项目使用的 OpenCvSharp 4.13 版本没有 `FaceRecognizerSF` 包装类，因此 SFace 识别通过 `CvDnn` 直接加载 ONNX 推理，5 点对齐使用 `Cv2.EstimateAffinePartial2D` 自行实现（与 OpenCV 官方 SFace 实现数值等价）。
+
+### 技术实现要点
 
 - **识别流水线**：YuNet 检测（输出人脸框 + 5 关键点）→ 以 ArcFace 标准 5 点为参考，`Cv2.EstimateAffinePartial2D`（RANSAC 相似变换）把人脸对齐裁剪到 112×112 → SFace（CvDnn 直接加载 ONNX，预处理与 OpenCV 官方一致）提取 128 维特征 → 与主人**多姿态模板**（正脸 + 左/右转头，组内平均归一化）逐一比对取**最大相似度**；侧脸姿态下阈值自适应下调 0.08。
 - **状态机（防闪烁）**：每帧产生观测结论（无人 / 主人在场 / 有人但非主人）；"有人但非主人"（以及无人策略为锁定时的"无人"）为风险帧——连续风险达到触发延迟才显示遮罩；遮罩激活后需连续安全达到恢复延迟才解除，避免单帧抖动造成遮罩闪烁。触发/恢复延迟与无人策略变更时状态机整体重建，重建/暂停时补发 Hide 保证遮罩不卡死。
@@ -160,7 +202,7 @@ Copy-Item -Recurse models publish\models
 - **摄像头健壮性**：DSHOW 后端、640×480；打开失败每 2 秒自动重试（累计 5 次提示"可能被占用"），连续 3 次读帧失败判定断开并自动重连；帧平均亮度低于暗光阈值（默认 18）以 5 秒节流提示；拔掉摄像头应用不崩溃。
 - **线程模型**：帧处理在摄像头后台采集线程上同步执行（天然限流）；引擎事件均在后台线程触发，UI/托盘操作一律经 Dispatcher 封送；普通状态文本 500ms 节流、推理异常 10 秒节流。
 
-## 10. 性能目标与实测建议
+### 性能目标与实测建议
 
 目标值（现代 4 核 CPU、CPU 推理）：
 
@@ -172,7 +214,7 @@ Copy-Item -Recurse models publish\models
 
 实测建议：任务管理器观察进程 CPU/内存，让引擎以默认设置连续运行 30 分钟，确认无内存持续增长；用秒表/录屏逐帧核对遮罩出现与消失的响应时间；如 CPU 偏高，可将采集帧率下调（5–10 FPS 可调），帧率越低占用越低。
 
-## 11. 重要限制（请务必了解）
+## 5. 重要限制（请务必了解）
 
 - **系统级界面无法覆盖**：遮罩是普通桌面窗口，无法覆盖 UAC 提升对话框、安全桌面、锁屏、Ctrl+Alt+Del 界面，也无法覆盖受 DRM 保护的内容（如部分流媒体播放器窗口）。
 - **不能防物理手段**：无法阻止他人用手机拍照、物理截屏或录屏软件录下屏幕内容；防截屏需系统级 API（`SetWindowDisplayAffinity` 仅对窗口内容生效），MVP 未实现。
@@ -182,76 +224,25 @@ Copy-Item -Recurse models publish\models
 - **"真模糊"已实现（含边界说明）**：遮罩激活瞬间会在后台对屏幕做一次 GDI 截屏 → OpenCV 高斯模糊（强度可在设置中调节，0 = 纯黑遮罩）→ 以模糊画面覆盖全屏，并叠加约 35% 压暗层保证不可读。模糊快照**仅存在于内存**、遮罩隐藏即释放、不落盘、不上传。边界：锁屏 / 安全桌面 / DRM 保护内容下截屏会失败或得到黑块，此时自动回退为半透明纯黑遮罩；模糊图截取的是触发瞬间的画面，遮罩期间屏幕内容变化不会实时刷新（本来就不可读）。
 - **模型许可证**：本项目默认的 YuNet 与 SFace 模型均为 **Apache-2.0，可商用**。若追求更高精度换用 ArcFace（InsightFace）官方权重，其许可证为"研究/非商业用途"，**商用需自行评估授权**；ArcFace 仅作为可选高精度路线说明，本项目不随包分发。
 
-## 12. 手动测试清单
+## 6. 参与贡献
 
-以下用例来自 spec，验收时逐项执行。**已自动化验证**的有：`dotnet build` 构建通过、13 个单元测试通过（`dotnet test`，覆盖状态机判定与模板加解密）、`dotnet publish` 单文件发布成功 + 启动冒烟。**其余需实机人工执行**（涉及真实摄像头、多显示器与系统安全桌面，沙箱/自动化环境无法覆盖）：
+欢迎提交 Issue 与 Pull Request。开发环境搭建、测试执行、发布打包、目录结构说明等，见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-| # | 用例 | 要点 | 验证方式 |
-|---|---|---|---|
-| 1 | 单人主人 | 主人正对屏幕不触发遮罩 | 人工 |
-| 2 | 单人非主人 | 陌生人入镜约 500ms 后触发遮罩 | 人工 |
-| 3 | 多人（含主人在场） | 主人 + 陌生人同时在画面：按主人处理不触发（已知限制，见第 11 节） | 人工 |
-| 4 | 照片/视频人脸攻击 | 拿照片/手机视频对准摄像头：仍按"检测到人脸"处理并触发遮罩（无活体检测） | 人工 |
-| 5 | 侧脸 | 主人扭头看侧屏：**不触发遮罩**（姿态过滤），状态栏显示"检测到侧脸/边缘脸，暂不判定身份" | 人工 |
-| 6 | 暗光 | 关灯/遮光：出现"光线过暗"气泡（5 秒节流），应用不崩溃 | 人工 |
-| 7 | 主人离开 | 遮罩激活后主人离开再回来：按恢复延迟自动解除（无人策略=保持正常时） | 人工 |
-| 8 | 多屏 | 双显示器：遮罩同时覆盖两屏、点击穿透生效 | 人工（需多屏） |
-| 9 | 全屏游戏/视频 | 遮罩可覆盖全屏应用画面 | 人工 |
-| 10 | 锁屏/安全桌面 | 遮罩无法覆盖（预期行为），验证应用不崩溃、解锁后恢复正常 | 人工 |
-| 11 | UAC | 同上，UAC 弹窗不被遮罩覆盖，应用不崩溃 | 人工 |
-| 12 | 误报/漏报统计 | 日常使用一段时间，统计主人被误触发与非主人漏触发次数 | 人工 |
-| 13 | 触发/恢复延迟实测 | 对照设置值验证 500ms 触发、800ms 恢复（含切换 ≤200ms） | 人工 |
-| 14 | 摄像头拔插 | 运行中拔掉摄像头：气泡提示"摄像头已断开"，应用不崩溃，重插自动恢复 | 人工 |
+- **发现 Bug 或有功能建议**：请用 [Issue 模板](.github/ISSUE_TEMPLATE) 提交，附上系统版本、摄像头型号与复现步骤。
+- **报告安全漏洞**：请勿公开提 Issue，按 [SECURITY.md](SECURITY.md) 的方式私下联系。
+- **提交代码**：请先阅读 CONTRIBUTING.md 中的代码风格与提交规范。
 
-## 13. 目录结构
+## 7. 开源许可
 
-```text
-PrivacyScreenGuard/
-├── PrivacyScreenGuard.sln              # 解决方案
-├── assets/
-│   └── icon.svg                        # 应用图标设计源文件（矢量，盾牌+镜头+守护斜杠）
-├── models/                             # 模型目录（首次运行可自动下载）
-│   ├── face_detection_yunet_2023mar.onnx       # YuNet 检测模型（约 0.22 MB）
-│   └── face_recognition_sface_2021dec.onnx     # SFace 识别模型（约 36.9 MB）
-├── src/PrivacyScreenGuard/             # 主项目（WPF，net8.0-windows）
-│   ├── App.xaml.cs                     # 入口：单实例/接线/热键/托盘/向导
-│   ├── app.manifest                    # PerMonitorV2 DPI 感知清单
-│   ├── Assets/                         # 图标资产（由 build_icon.py 生成）
-│   │   ├── icon.ico                    # exe/窗口/快捷方式图标（多尺寸）
-│   │   ├── icon_32.png                 # 托盘底图
-│   │   └── icon_256.png                # 托盘底图高清源
-│   ├── Models/
-│   │   ├── AppSettings.cs              # 设置项与默认值、范围夹取
-│   │   ├── CoreTypes.cs                # 无人策略/遮罩动作等枚举
-│   │   └── FaceInfo.cs                 # 人脸框+关键点
-│   ├── Native/
-│   │   └── Win32.cs                    # SetWindowPos/WS_EX_* 等 P/Invoke
-│   ├── Services/
-│   │   ├── CameraService.cs            # 摄像头采集（自动重试/断线重连/暗光提示）
-│   │   ├── FaceDetectionService.cs     # YuNet 检测（框+5 关键点）
-│   │   ├── FaceRecognitionService.cs   # SFace 对齐+128 维特征+余弦比对
-│   │   ├── GuardEngine.cs              # 守护引擎（帧处理主链路）
-│   │   ├── GuardStateMachine.cs        # 触发/恢复延迟状态机
-│   │   ├── MaskWindowManager.cs        # 多屏遮罩管理（截屏模糊）
-│   │   ├── ModelLocator.cs             # 模型文件定位
-│   │   ├── ModelDownloadService.cs     # 模型下载（首次运行，多源重试）
-│   │   ├── SettingsService.cs          # settings.json 读写
-│   │   ├── TemplateStore.cs            # 主人模板 DPAPI 加密存储
-│   │   ├── TrayIconService.cs          # 托盘图标与菜单
-│   │   ├── HotkeyService.cs            # 全局热键注册
-│   │   ├── AutostartService.cs         # 开机自启（注册表）
-│   │   └── ICameraService.cs 等        # 接口定义
-│   └── Windows/
-│       ├── MainWindow.xaml(.cs)        # 主窗口（设置/状态/清除生物特征）
-│       ├── SetupWizardWindow.xaml(.cs) # 首次注册向导（三步多姿态：正脸+左/右转头）
-│       ├── ModelDownloadWindow.xaml(.cs) # 模型下载窗口（进度/重试/取消）
-│       └── MaskWindow.cs               # 遮罩窗口（点击穿透/置顶/物理像素定位）
-├── tests/PrivacyScreenGuard.Tests/     # 单元测试（13 个：状态机+模板存储）
-└── publish/                            # dotnet publish 输出（发布后生成）
-```
+本项目基于 [MIT License](LICENSE) 开源，Copyright (c) 2026 meiwe。
 
-### 图标修改
+第三方依赖与资源的许可证：
 
-应用图标的设计源文件是 `assets/icon.svg`（矢量），`src/PrivacyScreenGuard/Assets/` 下是已生成好的成品（`icon.ico` 供 exe/窗口/快捷方式使用，PNG 供托盘使用），已随仓库提供，**构建项目无需任何额外工具**。
+| 名称 | 许可证 | 说明 |
+|---|---|---|
+| OpenCvSharp4 / .runtime.win / .WpfExtensions | Apache-2.0 | OpenCV 的 .NET 封装 |
+| WPF-UI | MIT | Fluent Design 控件样式 |
+| YuNet / SFace 模型（OpenCV Zoo） | Apache-2.0 | 可商用，不随仓库分发，由程序按需下载 |
+| 项目图标（`assets/icon.svg`） | MIT | 本项目原创 |
 
-若要修改图标：编辑 `assets/icon.svg`，用任意 SVG 工具（Inkscape、Illustrator、在线转换服务等）导出为多尺寸 `.ico`（建议包含 16/24/32/48/64/128/256）覆盖 `Assets/icon.ico`，并导出 256×256 PNG 覆盖 `Assets/icon_256.png`，重新 `dotnet build` 即生效。
+> 若你二次分发本项目的发布产物（单文件 exe），需一并遵守上述依赖的许可证条款（Apache-2.0 需保留版权与许可声明，MIT 需保留版权声明）。

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全漏洞报告
+    url: https://github.com/meiwe/PrivacyScreenGuard/security/advisories/new
+    about: 请勿公开提交安全漏洞，使用私密漏洞报告通道
+  - name: 使用问题咨询
+    url: https://github.com/meiwe/PrivacyScreenGuard/blob/main/README.md
+    about: 安装、配置与使用相关的问题请先查阅 README

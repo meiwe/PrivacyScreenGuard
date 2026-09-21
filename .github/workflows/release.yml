@@ -1,0 +1,61 @@
+name: Build & Release
+
+# 触发：
+# 1. 推送 v* 标签 → 编译并创建 GitHub Release（附带单文件 exe）
+# 2. 手动触发（Actions 页面 Run workflow）→ 仅编译并上传构建产物，用于验证
+# 3. 推送到 main → 编译校验（不发布）
+on:
+  push:
+    tags: [ 'v*' ]
+    branches: [ 'main' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: 还原依赖
+        run: dotnet restore PrivacyScreenGuard.sln
+
+      - name: 编译（Debug 校验）
+        run: dotnet build PrivacyScreenGuard.sln -c Debug --no-restore -v q --nologo
+
+      - name: 运行单元测试
+        run: dotnet test tests/PrivacyScreenGuard.Tests/PrivacyScreenGuard.Tests.csproj -c Debug --no-build --nologo -v q
+
+      - name: 发布单文件（win-x64 自包含）
+        run: dotnet publish src/PrivacyScreenGuard/PrivacyScreenGuard.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish -v q --nologo
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrivacyScreenGuard-win-x64
+          path: publish/PrivacyScreenGuard.exe
+
+  release:
+    # 仅标签推送时创建 Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: PrivacyScreenGuard-win-x64
+
+      - name: 创建 Release 并附加 exe
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PrivacyScreenGuard.exe
+          generate_release_notes: true

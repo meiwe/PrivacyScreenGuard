@@ -1,0 +1,23 @@
+# 默认由 Git 自动处理换行符：仓库内统一 LF，检出时按平台转换
+* text=auto
+
+# 源码与文本文件统一使用 LF，避免跨平台协作时整文件 diff
+*.cs       text eol=lf
+*.xaml     text eol=lf
+*.csproj   text eol=lf
+*.sln      text eol=crlf
+*.manifest text eol=lf
+*.md       text eol=lf
+*.py       text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.json     text eol=lf
+*.svg      text eol=lf
+*.html     text eol=lf
+.gitignore text eol=lf
+LICENSE    text eol=lf
+
+# 二进制文件禁止换行符转换与文本 diff
+*.ico      binary
+*.png      binary
+*.onnx     binary
